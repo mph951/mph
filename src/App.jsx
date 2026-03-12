@@ -738,7 +738,7 @@ function MainApp({ gasUrl, onLogout }) {
 // ── URL del script de Google fija en el código ────────────────────────────
 const GAS_URL = "https://script.google.com/macros/s/AKfycbx4CafPbrXpyQO60Ub2hCvWyG6ZVT0U8JDIvzRMLeXPgCg_W9wxCGW53EVlpXwdZIJ9/exec";
 // ── Contraseña de acceso — cambiala por la que quieras ────────────────────
-const ACCESS_PASSWORD = "Mph951";
+const ACCESS_PASSWORD = "mph951";
 
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(false);
