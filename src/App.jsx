@@ -734,41 +734,16 @@ function MainApp({ gasUrl, onLogout }) {
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /*  ROOT COMPONENT                                                             */
 /* ═══════════════════════════════════════════════════════════════════════════ */
+
+// ── URL del script de Google fija en el código ────────────────────────────
+const GAS_URL = "https://script.google.com/macros/s/AKfycbx4CafPbrXpyQO60Ub2hCvWyG6ZVT0U8JDIvzRMLeXPgCg_W9wxCGW53EVlpXwdZIJ9/exec";
+// ── Contraseña de acceso — cambiala por la que quieras ────────────────────
+const ACCESS_PASSWORD = "Mph951";
+
 export default function App() {
-  const [config, setConfig] = useState(null);   // { gasUrl, password }
   const [loggedIn, setLoggedIn] = useState(false);
-  const [ready, setReady] = useState(false);
 
-  useEffect(()=>{
-    (async()=>{
-      try {
-        const urlR = await window.storage.get(SK.gasUrl);
-        const pwR  = await window.storage.get(SK.password);
-        if (urlR?.value && pwR?.value) {
-          setConfig({ gasUrl: urlR.value, password: pwR.value });
-        }
-      } catch(e) { /* first run */ }
-      finally { setReady(true); }
-    })();
-  },[]);
-
-  const saveSetup = async (gasUrl, password) => {
-    await window.storage.set(SK.gasUrl, gasUrl);
-    await window.storage.set(SK.password, password);
-    setConfig({ gasUrl, password });
-  };
-
-  const handleLogout = () => setLoggedIn(false);
-
-  if (!ready) return (
-    <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <style>{CSS}</style>
-      <div style={{width:40,height:40,border:`3px solid ${C.border}`,borderTopColor:C.accent,borderRadius:"50%",animation:"spin .8s linear infinite"}}/>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    </div>
-  );
-
-  if (!config) return <SetupScreen onSave={saveSetup}/>;
-  if (!loggedIn) return <LoginScreen savedPassword={config.password} onLogin={()=>setLoggedIn(true)}/>;
-  return <MainApp gasUrl={config.gasUrl} onLogout={handleLogout}/>;
+  return loggedIn
+    ? <MainApp gasUrl={GAS_URL} onLogout={()=>setLoggedIn(false)}/>
+    : <LoginScreen savedPassword={ACCESS_PASSWORD} onLogin={()=>setLoggedIn(true)}/>;
 }
