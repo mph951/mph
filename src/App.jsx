@@ -161,10 +161,28 @@ function MainApp({ onLogout }) {
   },[]);
   useEffect(()=>{ loadAll(); },[loadAll]);
 
-  const nav = (v,id=null)=>{
+  const applyNav = (v,id=null)=>{
     setView(v); setSelId(id); setFormErr(""); setBusqueda(""); setConBusq("");
     setSorteo({animando:false,ganador:null,nombres:[]}); setConfirm(null); setExtendiendo(false); setNuevaFecha("");
   };
+
+  const nav = (v,id=null)=>{
+    window.history.pushState({view:v,id}, "");
+    applyNav(v,id);
+  };
+
+  // Botón atrás del teléfono/navegador
+  useEffect(()=>{
+    // Registrar el estado inicial para que el primer "atrás" no salga de la app
+    window.history.replaceState({view:V.DASH,id:null}, "");
+    const onPop = (e)=>{
+      const s = e.state;
+      if(s&&s.view){ applyNav(s.view, s.id||null); }
+      else { applyNav(V.DASH, null); }
+    };
+    window.addEventListener("popstate", onPop);
+    return ()=>window.removeEventListener("popstate", onPop);
+  },[]);
 
   /* selectors */
   const selOy  = useMemo(()=>oyentes.find(o=>o.id===selId),[oyentes,selId]);
