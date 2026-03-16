@@ -308,16 +308,128 @@ function MainApp({ onLogout }) {
   };
 
   /* ── Excel export ── */
-  const exportExcel = ()=>{
-    const rows=[["Nombre","Teléfono","DNI","Email","Edad","Localidad","Género","Fecha Registro","Participaciones","Premios ganados","Último premio"]];
-    oyentes.forEach(o=>rows.push([o.nombre,o.telefono,o.dni,o.email||"",o.edad||"",o.localidad||"",o.genero||"",o.fechaRegistro||"",o.veces||0,o.totalWins||0,o.ultimoWin||""]));
-    const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
-    const bom="\uFEFF";
-    const blob=new Blob([bom+csv],{type:"text/csv;charset=utf-8;"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a"); a.href=url; a.download="MetroPowerHits_Oyentes.csv"; a.click();
-    URL.revokeObjectURL(url);
-    showToast("Excel exportado ✓");
+  const exportExcel = async ()=>{
+    showToast("Generando Excel...");
+    try {
+      const ExcelJS = (await import("exceljs")).default;
+      const wb = new ExcelJS.Workbook();
+      wb.creator = "Metro Power Hits";
+      wb.created = new Date();
+
+      // ── Hoja 1: Oyentes ──────────────────────────────────────────────────
+      const ws = wb.addWorksheet("Oyentes", { views:[{state:"frozen",ySplit:2}] });
+
+      // Fila de título
+      ws.mergeCells("A1:J1");
+      const titleCell = ws.getCell("A1");
+      titleCell.value = "METRO POWER HITS — Base de Oyentes";
+      titleCell.font = { name:"Arial", bold:true, size:14, color:{argb:"FFFFFFFF"} };
+      titleCell.fill = { type:"pattern", pattern:"solid", fgColor:{argb:"FF0EA5E9"} };
+      titleCell.alignment = { horizontal:"center", vertical:"middle" };
+      ws.getRow(1).height = 30;
+
+      // Encabezados
+      const COLS = [
+        { header:"Nombre",           key:"nombre",     width:28 },
+        { header:"Teléfono / WA",    key:"telefono",   width:18 },
+        { header:"DNI",              key:"dni",        width:13 },
+        { header:"Email",            key:"email",      width:26 },
+        { header:"Edad",             key:"edad",       width:8  },
+        { header:"Localidad",        key:"localidad",  width:20 },
+        { header:"Género",           key:"genero",     width:10 },
+        { header:"Participaciones",  key:"veces",      width:16 },
+        { header:"Premios ganados",  key:"totalWins",  width:16 },
+        { header:"Último premio",    key:"ultimoWin",  width:14 },
+      ];
+
+      ws.columns = COLS.map(c=>({ key:c.key, width:c.width }));
+
+      const headerRow = ws.getRow(2);
+      COLS.forEach((c,i)=>{
+        const cell = headerRow.getCell(i+1);
+        cell.value = c.header;
+        cell.font = { name:"Arial", bold:true, size:10, color:{argb:"FFFFFFFF"} };
+        cell.fill = { type:"pattern", pattern:"solid", fgColor:{argb:"FF1E3A5F"} };
+        cell.alignment = { horizontal:"center", vertical:"middle", wrapText:true };
+        cell.border = { bottom:{style:"thin",color:{argb:"FF0EA5E9"}} };
+      });
+      headerRow.height = 22;
+
+      // Datos
+      const generoColor = g => g==="Mujer"?"FFFCE4EC":g==="Hombre"?"FFE3F2FD":"FFF3E5F5";
+      oyentes.forEach((o,i)=>{
+        const row = ws.addRow({
+          nombre:   o.nombre||"",
+          telefono: o.telefono||"",
+          dni:      o.dni||"",
+          email:    o.email||"",
+          edad:     parseInt(o.edad)||"",
+          localidad:o.localidad||"",
+          genero:   o.genero||"",
+          veces:    parseInt(o.veces)||0,
+          totalWins:parseInt(o.totalWins)||0,
+          ultimoWin:o.ultimoWin||"",
+        });
+        const bg = i%2===0 ? "FFFFFFFF" : "FFF0F7FF";
+        row.eachCell(cell=>{
+          cell.font = { name:"Arial", size:10 };
+          cell.fill = { type:"pattern", pattern:"solid", fgColor:{argb:bg} };
+          cell.alignment = { vertical:"middle" };
+          cell.border = { bottom:{style:"hair",color:{argb:"FFDDE6F0"}} };
+        });
+        // Color celda género
+        if(o.genero){ const gc=row.getCell(7); gc.fill={type:"pattern",pattern:"solid",fgColor:{argb:generoColor(o.genero)}}; }
+        // Negrita si tiene premios
+        if(parseInt(o.totalWins)>0){ row.getCell(9).font={name:"Arial",size:10,bold:true,color:{argb:"FF10B981"}}; }
+        // Alerta rojo suave si ganó en últimos 30 días
+        if(isRecent(o)){ row.getCell(10).font={name:"Arial",size:10,bold:true,color:{argb:"FFD97706"}}; }
+        row.height = 18;
+      });
+
+      // Totales
+      const totRow = ws.addRow(["","","","","","","Total:",oyentes.length,oyentes.filter(o=>parseInt(o.totalWins)>0).length,""]);
+      totRow.eachCell(cell=>{ cell.font={name:"Arial",size:10,bold:true}; cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFE0F2FE"}}; });
+
+      // ── Hoja 2: Estadísticas ─────────────────────────────────────────────
+      const ws2 = wb.addWorksheet("Estadísticas");
+
+      const addStat = (title, data, startRow) => {
+        ws2.mergeCells(`A${startRow}:C${startRow}`);
+        const h = ws2.getCell(`A${startRow}`);
+        h.value = title; h.font={name:"Arial",bold:true,size:11,color:{argb:"FFFFFFFF"}};
+        h.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF0EA5E9"}};
+        h.alignment={horizontal:"left",vertical:"middle"}; h.border={bottom:{style:"thin",color:{argb:"FF1E3A5F"}}};
+        ws2.getRow(startRow).height=22;
+        data.forEach(([label,val],i)=>{
+          const r=ws2.getRow(startRow+1+i);
+          r.getCell(1).value=label; r.getCell(1).font={name:"Arial",size:10};
+          r.getCell(2).value=val; r.getCell(2).font={name:"Arial",size:10,bold:true,color:{argb:"FF0EA5E9"}};
+          r.getCell(2).alignment={horizontal:"right"};
+          const bg=i%2===0?"FFFFFFFF":"FFF0F7FF";
+          [1,2,3].forEach(c=>{ r.getCell(c).fill={type:"pattern",pattern:"solid",fgColor:{argb:bg}}; });
+          r.height=18;
+        });
+        return startRow+data.length+2;
+      };
+
+      ws2.getColumn(1).width=22; ws2.getColumn(2).width=14; ws2.getColumn(3).width=5;
+      const edadesData=Object.entries({"18-25":0,"26-35":0,"36-45":0,"46+":0});
+      oyentes.forEach(o=>{const e=parseInt(o.edad);if(!e)return;if(e<=25)edadesData[0][1]++;else if(e<=35)edadesData[1][1]++;else if(e<=45)edadesData[2][1]++;else edadesData[3][1]++;});
+      const genData={Mujer:0,Hombre:0,Otro:0};
+      oyentes.forEach(o=>{if(o.genero==="Mujer")genData.Mujer++;else if(o.genero==="Hombre")genData.Hombre++;else if(o.genero)genData.Otro++;});
+      let r=1;
+      r=addStat("📊 Resumen general",[["Total oyentes",oyentes.length],["Con premios",oyentes.filter(o=>parseInt(o.totalWins)>0).length],["Ganaron en últimos 30d",oyentes.filter(o=>isRecent(o)).length]],r);
+      r=addStat("🎂 Rango de edades",edadesData.map(([k,v])=>[k+" años",v]),r);
+      r=addStat("👤 Género",Object.entries(genData),r);
+
+      // Descargar
+      const buf = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href=url; a.download="MetroPowerHits_Oyentes.xlsx"; a.click();
+      URL.revokeObjectURL(url);
+      showToast("Excel generado ✓");
+    } catch(e){ showToast("Error al generar Excel: "+e.message,"err"); console.error(e); }
   };
 
   /* ── sub-components ── */
