@@ -143,6 +143,7 @@ function MainApp({ onLogout }) {
   const [nuevaFecha, setNuevaFecha]     = useState("");
 
   const emptyOy  = {nombre:"",telefono:"",dni:"",email:"",edad:"",localidad:"",genero:""};
+  const [oyConIds, setOyConIds] = useState([]); // concursos seleccionados al registrar
   const emptyCon = {nombre:"",premio:"",descripcion:"",fechaDesde:"",fechaHasta:"",tipo:"ganador_directo"};
   const [oyForm,  setOyForm]  = useState(emptyOy);
   const [conForm, setConForm] = useState(emptyCon);
@@ -163,7 +164,7 @@ function MainApp({ onLogout }) {
 
   const applyNav = (v,id=null)=>{
     setView(v); setSelId(id); setFormErr(""); setBusqueda(""); setConBusq("");
-    setSorteo({animando:false,ganador:null,nombres:[]}); setConfirm(null); setExtendiendo(false); setNuevaFecha("");
+    setSorteo({animando:false,ganador:null,nombres:[]}); setConfirm(null); setExtendiendo(false); setNuevaFecha(""); setOyConIds([]);
   };
 
   const nav = (v,id=null)=>{
@@ -217,8 +218,24 @@ function MainApp({ onLogout }) {
     try {
       const newO={id:uid(),...oyForm,edad:parseInt(oyForm.edad)||"",fechaRegistro:today(),veces:0,totalWins:0,ultimoWin:""};
       await api("addOyente",newO);
-      setOyentes(p=>[...p,newO]); setOyForm(emptyOy);
-      showToast("Oyente registrado ✓"); nav(V.OYENTES);
+      // Inscribir en concursos seleccionados
+      let inscriptos=0, ganados=0;
+      for(const conId of oyConIds){
+        const con=concursos.find(c=>c.id===conId);
+        if(!con)continue;
+        const p={concursoId:conId,oyenteId:newO.id,fecha:today(),concursoNombre:con.nombre||"",concursoPremio:con.premio||""};
+        await api("addParticipante",p);
+        setPartic(prev=>[...prev,p]);
+        inscriptos++;
+        if(con.tipo==="ganador_directo"){
+          const newWins=(parseInt(newO.totalWins)||0)+ganados+1;
+          await api("setGanador",{concursoId:conId,oyenteId:newO.id,oyenteNombre:newO.nombre,newTotalWins:newWins,ultimoWin:today(),sinFinalizar:true});
+          ganados++;
+        }
+      }
+      const finalOy={...newO,veces:inscriptos,totalWins:ganados,ultimoWin:ganados>0?today():""};
+      setOyentes(p=>[...p,finalOy]); setOyForm(emptyOy); setOyConIds([]);
+      showToast(inscriptos>0?`Oyente registrado e inscripto en ${inscriptos} concurso${inscriptos>1?"s":""}  ✓`:"Oyente registrado ✓"); nav(V.OYENTES);
     } catch(e){setFormErr("Error: "+e.message);}
     finally{setSaving(false);}
   };
@@ -238,12 +255,21 @@ function MainApp({ onLogout }) {
   const inscribir = async(oyId,conId)=>{
     if(inCon(oyId,conId))return;
     const con=concursos.find(c=>c.id===conId);
+    const esGanadorDirecto=con?.tipo==="ganador_directo";
     try {
       const p={concursoId:conId,oyenteId:oyId,fecha:today(),concursoNombre:con?.nombre||"",concursoPremio:con?.premio||""};
       await api("addParticipante",p);
       setPartic(prev=>[...prev,p]);
-      setOyentes(prev=>prev.map(o=>o.id===oyId?{...o,veces:(parseInt(o.veces)||0)+1}:o));
-      showToast("Inscripto ✓");
+      if(esGanadorDirecto){
+        const oyente=oyentes.find(o=>o.id===oyId);
+        const newWins=(parseInt(oyente?.totalWins)||0)+1;
+        await api("setGanador",{concursoId:conId,oyenteId:oyId,oyenteNombre:oyente?.nombre||"",newTotalWins:newWins,ultimoWin:today(),sinFinalizar:true});
+        setOyentes(prev=>prev.map(o=>o.id===oyId?{...o,veces:(parseInt(o.veces)||0)+1,totalWins:newWins,ultimoWin:today()}:o));
+        showToast("🏆 Inscripto como ganador en "+con.nombre);
+      } else {
+        setOyentes(prev=>prev.map(o=>o.id===oyId?{...o,veces:(parseInt(o.veces)||0)+1}:o));
+        showToast("Inscripto en "+con?.nombre+" ✓");
+      }
     } catch(e){showToast("Error: "+e.message,"err");}
   };
 
@@ -608,7 +634,7 @@ function MainApp({ onLogout }) {
                     {cuandoStr&&<div style={{color:C.muted,fontSize:11,marginTop:1}}>🗓 Inscripto {cuandoStr} · {p.fecha}</div>}
                   </div>
                   <div style={{flexShrink:0,marginLeft:8}}>
-                    {con?.ganadorId===selOy.id?<span className="tag-ok">🏆 Ganador</span>:con?.estado==="activo"?<span className="tag-active">En curso</span>:!con?<span className="tag-done">Finalizado</span>:<span className="tag-done">No ganó</span>}
+                    {(con?.ganadorId===selOy.id||con?.tipo==="ganador_directo")?<span className="tag-ok">🏆 Ganador</span>:con?.estado==="activo"?<span className="tag-active">En curso</span>:!con?<span className="tag-done">Finalizado</span>:<span className="tag-done">No ganó</span>}
                   </div>
                 </div>);
               })}
@@ -637,6 +663,30 @@ function MainApp({ onLogout }) {
                 </select>
               </div>
             </div>
+            {/* Inscribir en concursos activos */}
+            {consActivos.length>0&&(
+              <div style={{marginTop:20}}>
+                <Lbl>Anotar como ganador en concurso activo (opcional)</Lbl>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {consActivos.map(c=>{
+                    const selected=oyConIds.includes(c.id);
+                    return(
+                      <div key={c.id} onClick={()=>setOyConIds(p=>selected?p.filter(id=>id!==c.id):[...p,c.id])}
+                        style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`2px solid ${selected?C.accent:C.border}`,background:selected?C.accent+"11":C.card,cursor:"pointer",transition:"all .15s"}}>
+                        <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${selected?C.accent:C.border}`,background:selected?C.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
+                          {selected&&<span style={{color:"#fff",fontSize:12,lineHeight:1}}>✓</span>}
+                        </div>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:600,fontSize:13,color:selected?C.accent:C.text}}>{c.nombre}</div>
+                          <div style={{fontSize:11,color:C.muted}}>🎁 {c.premio} · {c.tipo==="sorteo"?"🎲 Sorteo":"🏆 Ganador directo"}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {oyConIds.length>0&&<p style={{color:C.green,fontSize:12,marginTop:8,fontWeight:600}}>🏆 Se registrará como ganador en {oyConIds.length} concurso{oyConIds.length>1?"s":""}</p>}
+              </div>
+            )}
             <button className="btn" onClick={addOyente} disabled={saving} style={{width:"100%",padding:13,marginTop:20}}>{saving?"Guardando...":"Registrar oyente"}</button>
           </div>
         )}
@@ -735,7 +785,7 @@ function MainApp({ onLogout }) {
                   <div key={o.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:`1px solid ${C.border}`}}>
                     <div><div style={{fontWeight:600,fontSize:13}}>{o.nombre}</div><div style={{color:C.muted,fontSize:11}}>{o.telefono}</div></div>
                     <div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap",justifyContent:"flex-end"}}>
-                      {selCon.ganadorId===o.id&&<span className="tag-ok">🏆</span>}
+                      {(selCon.ganadorId===o.id||selCon.tipo==="ganador_directo")&&<span className="tag-ok">🏆 Ganó</span>}
                       {isRecent(o)&&selCon.ganadorId!==o.id&&<span className="tag-warn">⚠{daysSince(o.ultimoWin)}d</span>}
                       {selCon.estado==="activo"&&selCon.tipo==="ganador_directo"&&selCon.ganadorId!==o.id&&(
                         <button className="btn-green btn-sm" onClick={()=>marcarGanadorDirecto(o)}>✓ Ganador</button>
