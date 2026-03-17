@@ -147,6 +147,7 @@ function MainApp({ onLogout }) {
   const emptyCon = {nombre:"",premio:"",descripcion:"",fechaDesde:"",fechaHasta:"",tipo:"ganador_directo"};
   const [oyForm,  setOyForm]  = useState(emptyOy);
   const [editForm, setEditForm] = useState(emptyOy);
+  const [editConId, setEditConId] = useState(""); // concurso a agregar al editar
   const [conForm, setConForm] = useState(emptyCon);
 
   const showToast = (msg,type="ok") => { setToast({msg,type}); setTimeout(()=>setToast(null),3500); };
@@ -165,7 +166,7 @@ function MainApp({ onLogout }) {
 
   const applyNav = (v,id=null)=>{
     setView(v); setSelId(id); setFormErr(""); setBusqueda(""); setConBusq("");
-    setSorteo({animando:false,ganador:null,nombres:[]}); setConfirm(null); setExtendiendo(false); setNuevaFecha(""); setOyConIds([]);
+    setSorteo({animando:false,ganador:null,nombres:[]}); setConfirm(null); setExtendiendo(false); setNuevaFecha(""); setOyConIds([]); setEditConId("");
   };
 
   const nav = (v,id=null)=>{
@@ -235,7 +236,7 @@ function MainApp({ onLogout }) {
         }
       }
       const finalOy={...newO,veces:inscriptos,totalWins:ganados,ultimoWin:ganados>0?today():""};
-      setOyentes(p=>[...p,finalOy]); setOyForm(emptyOy); setOyConIds([]);
+      setOyentes(p=>[...p,finalOy]); setOyForm(emptyOy); setOyConIds([]); setEditConId("");
       showToast(inscriptos>0?`Oyente registrado e inscripto en ${inscriptos} concurso${inscriptos>1?"s":""}  ✓`:"Oyente registrado ✓"); nav(V.OYENTES);
     } catch(e){setFormErr("Error: "+e.message);}
     finally{setSaving(false);}
@@ -250,7 +251,29 @@ function MainApp({ onLogout }) {
       const updated={...selOy,...editForm,edad:parseInt(editForm.edad)||""};
       await api("updateOyente",updated);
       setOyentes(p=>p.map(o=>o.id===selId?updated:o));
-      showToast("Datos actualizados ✓");
+      // Si eligió un concurso, inscribirlo/marcarlo ganador
+      if(editConId){
+        const con=concursos.find(c=>c.id===editConId);
+        if(con&&!inCon(selId,editConId)){
+          const p={concursoId:editConId,oyenteId:selId,fecha:today(),concursoNombre:con.nombre||"",concursoPremio:con.premio||""};
+          await api("addParticipante",p);
+          setPartic(prev=>[...prev,p]);
+          if(con.tipo==="ganador_directo"){
+            const newWins=(parseInt(updated.totalWins)||0)+1;
+            await api("setGanador",{concursoId:editConId,oyenteId:selId,oyenteNombre:updated.nombre,newTotalWins:newWins,ultimoWin:today(),sinFinalizar:true});
+            setOyentes(p=>p.map(o=>o.id===selId?{...updated,totalWins:newWins,ultimoWin:today(),veces:(parseInt(updated.veces)||0)+1}:o));
+            showToast("Datos guardados · 🏆 Ganador en "+con.nombre);
+          } else {
+            setOyentes(p=>p.map(o=>o.id===selId?{...updated,veces:(parseInt(updated.veces)||0)+1}:o));
+            showToast("Datos guardados · Inscripto en "+con.nombre);
+          }
+        } else {
+          showToast("Datos actualizados ✓");
+        }
+      } else {
+        showToast("Datos actualizados ✓");
+      }
+      setEditConId("");
       nav(V.OY_DET,selId);
     } catch(e){setFormErr("Error: "+e.message);}
     finally{setSaving(false);}
@@ -754,6 +777,28 @@ function MainApp({ onLogout }) {
                 </select>
               </div>
             </div>
+            {/* Agregar a concurso activo */}
+            {consActivos.filter(c=>!inCon(selOy.id,c.id)).length>0&&(
+              <div style={{marginTop:20}}>
+                <Lbl>Agregar a concurso activo (opcional)</Lbl>
+                <select className="sel" value={editConId} onChange={e=>setEditConId(e.target.value)}>
+                  <option value="">— No agregar a ninguno —</option>
+                  {consActivos.filter(c=>!inCon(selOy.id,c.id)).map(c=>(
+                    <option key={c.id} value={c.id}>
+                      {c.tipo==="ganador_directo"?"🏆":"🎲"} {c.nombre} — {c.premio}
+                    </option>
+                  ))}
+                </select>
+                {editConId&&(()=>{
+                  const con=concursos.find(c=>c.id===editConId);
+                  return con?(
+                    <p style={{color:con.tipo==="ganador_directo"?C.green:C.accent,fontSize:12,marginTop:6,fontWeight:600}}>
+                      {con.tipo==="ganador_directo"?"🏆 Se marcará como ganador en":"🎲 Se inscribirá en"} {con.nombre}
+                    </p>
+                  ):null;
+                })()}
+              </div>
+            )}
             <button className="btn" onClick={updateOyente} disabled={saving} style={{width:"100%",padding:13,marginTop:20}}>{saving?"Guardando...":"Guardar cambios"}</button>
           </div>
         )}
