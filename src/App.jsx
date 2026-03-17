@@ -1251,7 +1251,7 @@ function MainApp({onLogout,role}){
 }
 
 /* ─── CONFIG ── */
-const GAS_URL="https://script.google.com/macros/s/AKfycbx4CafPbrXpyQO60Ub2hCvWyG6ZVT0U8JDIvzRMLeXPgCg_W9wxCGW53EVlpXwdZIJ9/exec";
+const GAS_URL="https://script.google.com/macros/s/AKfycbwyXn880QkXk0RvESD0cjbbXV0PANqD0XwTHx4WIVLfe9SYp5w5-M3h3S5tx5C6ui8I/exec";
 const ACCESS_PASSWORD="mph951";       // Admin: acceso completo
 const PRODUCER_PASSWORD="mph2025";    // Productor: sin eliminar concursos
 
