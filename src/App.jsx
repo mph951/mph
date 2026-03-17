@@ -139,12 +139,14 @@ function MainApp({ onLogout }) {
   const [confirm, setConfirm]       = useState(null); // { type, id }
   const [sorteoState, setSorteo]    = useState({animando:false,ganador:null,nombres:[]});
   const [showArchived, setShowArchived] = useState(false);
-  const [extendiendo, setExtendiendo]   = useState(false); // panel extender fecha
+  const [extendiendo, setExtendiendo]   = useState(false);
   const [nuevaFecha, setNuevaFecha]     = useState("");
+  const [pickingWinner, setPickingWinner] = useState(null); // {oyente} — panel elegir cantidad
+  const [cantGanada, setCantGanada]     = useState(1);
 
   const emptyOy  = {nombre:"",telefono:"",dni:"",email:"",edad:"",localidad:"",genero:""};
   const [oyConIds, setOyConIds] = useState([]); // concursos seleccionados al registrar
-  const emptyCon = {nombre:"",premio:"",descripcion:"",fechaDesde:"",fechaHasta:"",tipo:"ganador_directo"};
+  const emptyCon = {nombre:"",premio:"",descripcion:"",fechaDesde:"",fechaHasta:"",tipo:"ganador_directo",stockTotal:"",stockExtra:""};
   const [oyForm,  setOyForm]  = useState(emptyOy);
   const [editForm, setEditForm] = useState(emptyOy);
   const [editConId, setEditConId] = useState(""); // concurso a agregar al editar
@@ -167,7 +169,7 @@ function MainApp({ onLogout }) {
 
   const applyNav = (v,id=null)=>{
     setView(v); setSelId(id); setFormErr(""); setBusqueda(""); setConBusq("");
-    setSorteo({animando:false,ganador:null,nombres:[]}); setConfirm(null); setExtendiendo(false); setNuevaFecha(""); setOyConIds([]); setEditConId("");
+    setSorteo({animando:false,ganador:null,nombres:[]}); setConfirm(null); setExtendiendo(false); setNuevaFecha(""); setOyConIds([]); setEditConId(""); setPickingWinner(null); setCantGanada(1);
   };
 
   const nav = (v,id=null)=>{
@@ -232,12 +234,14 @@ function MainApp({ onLogout }) {
         inscriptos++;
         if(con.tipo==="ganador_directo"){
           const newWins=(parseInt(newO.totalWins)||0)+ganados+1;
-          await api("setGanador",{concursoId:conId,oyenteId:newO.id,oyenteNombre:newO.nombre,newTotalWins:newWins,ultimoWin:today(),sinFinalizar:true});
+          const stockUsado=(parseInt(con.stockUsado)||0)+1;
+          await api("setGanadorDirecto",{concursoId:conId,oyenteId:newO.id,oyenteNombre:newO.nombre,newTotalWins:newWins,ultimoWin:today(),qty:1,stockUsado});
+          setConcursos(prev=>prev.map(c=>c.id===conId?{...c,stockUsado}:c));
           ganados++;
         }
       }
       const finalOy={...newO,veces:inscriptos,totalWins:ganados,ultimoWin:ganados>0?today():""};
-      setOyentes(p=>[...p,finalOy]); setOyForm(emptyOy); setOyConIds([]); setEditConId("");
+      setOyentes(p=>[...p,finalOy]); setOyForm(emptyOy); setOyConIds([]); setEditConId(""); setPickingWinner(null); setCantGanada(1);
       showToast(inscriptos>0?`Oyente registrado e inscripto en ${inscriptos} concurso${inscriptos>1?"s":""}  ✓`:"Oyente registrado ✓"); nav(V.OYENTES);
     } catch(e){setFormErr("Error: "+e.message);}
     finally{setSaving(false);}
@@ -261,7 +265,9 @@ function MainApp({ onLogout }) {
           setPartic(prev=>[...prev,p]);
           if(con.tipo==="ganador_directo"){
             const newWins=(parseInt(updated.totalWins)||0)+1;
-            await api("setGanador",{concursoId:editConId,oyenteId:selId,oyenteNombre:updated.nombre,newTotalWins:newWins,ultimoWin:today(),sinFinalizar:true});
+            const stockUsado=(parseInt(con.stockUsado)||0)+1;
+            await api("setGanadorDirecto",{concursoId:editConId,oyenteId:selId,oyenteNombre:updated.nombre,newTotalWins:newWins,ultimoWin:today(),qty:1,stockUsado});
+            setConcursos(prev=>prev.map(c=>c.id===editConId?{...c,stockUsado}:c));
             setOyentes(p=>p.map(o=>o.id===selId?{...updated,totalWins:newWins,ultimoWin:today(),veces:(parseInt(updated.veces)||0)+1}:o));
             showToast("Datos guardados · 🏆 Ganador en "+con.nombre);
           } else {
@@ -297,7 +303,7 @@ function MainApp({ onLogout }) {
     if(!conForm.nombre||!conForm.premio){setFormErr("Nombre y premio son obligatorios.");return;}
     setSaving(true);
     try {
-      const newC={id:uid(),...conForm,estado:"activo",ganadorId:"",ganadorNombre:""};
+      const newC={id:uid(),...conForm,stockTotal:parseInt(conForm.stockTotal)||"",stockUsado:0,estado:"activo",ganadorId:"",ganadorNombre:""};
       await api("addConcurso",newC);
       setConcursos(p=>[...p,newC]); setConForm(emptyCon);
       showToast("Concurso creado ✓"); nav(V.CONS);
@@ -316,7 +322,9 @@ function MainApp({ onLogout }) {
       if(esGanadorDirecto){
         const oyente=oyentes.find(o=>o.id===oyId);
         const newWins=(parseInt(oyente?.totalWins)||0)+1;
-        await api("setGanador",{concursoId:conId,oyenteId:oyId,oyenteNombre:oyente?.nombre||"",newTotalWins:newWins,ultimoWin:today(),sinFinalizar:true});
+        const stockUsado=(parseInt(con?.stockUsado)||0)+1;
+        await api("setGanadorDirecto",{concursoId:conId,oyenteId:oyId,oyenteNombre:oyente?.nombre||"",newTotalWins:newWins,ultimoWin:today(),qty:1,stockUsado});
+        setConcursos(prev=>prev.map(c=>c.id===conId?{...c,stockUsado}:c));
         setOyentes(prev=>prev.map(o=>o.id===oyId?{...o,veces:(parseInt(o.veces)||0)+1,totalWins:newWins,ultimoWin:today()}:o));
         showToast("🏆 Inscripto como ganador en "+con.nombre);
       } else {
@@ -326,14 +334,20 @@ function MainApp({ onLogout }) {
     } catch(e){showToast("Error: "+e.message,"err");}
   };
 
-  const marcarGanadorDirecto = async(oyente)=>{
+  const marcarGanadorDirecto = async(oyente, qty=1)=>{
     if(!selCon)return;
-    const newWins=parseInt(oyente.totalWins||0)+1;
+    const newWins=(parseInt(oyente.totalWins)||0)+1;
+    // Calcular nuevo stock usado
+    const stockUsado=(parseInt(selCon.stockUsado)||0)+qty;
+    const stockTotal=parseInt(selCon.stockTotal)||0;
+    const sinStock=stockTotal>0&&stockUsado>=stockTotal;
     try {
-      await api("setGanador",{concursoId:selCon.id,oyenteId:oyente.id,oyenteNombre:oyente.nombre,newTotalWins:newWins,ultimoWin:today()});
-      setConcursos(p=>p.map(c=>c.id===selCon.id?{...c,estado:"finalizado",ganadorId:oyente.id,ganadorNombre:oyente.nombre}:c));
+      await api("setGanadorDirecto",{concursoId:selCon.id,oyenteId:oyente.id,oyenteNombre:oyente.nombre,newTotalWins:newWins,ultimoWin:today(),qty,stockUsado});
+      setConcursos(p=>p.map(c=>c.id===selCon.id?{...c,stockUsado,ganadorId:oyente.id,ganadorNombre:oyente.nombre}:c));
       setOyentes(p=>p.map(o=>o.id===oyente.id?{...o,totalWins:newWins,ultimoWin:today()}:o));
-      showToast(`🏆 ${oyente.nombre} marcado como ganador`,"win");
+      setPickingWinner(null); setCantGanada(1);
+      if(sinStock) showToast(`🏆 ${oyente.nombre} ganó ${qty} · ⚠️ ¡Sin stock!`,"win");
+      else showToast(`🏆 ${oyente.nombre} ganó ${qty} entrada${qty>1?"s":""}`, "win");
     } catch(e){showToast("Error: "+e.message,"err");}
   };
 
@@ -922,6 +936,68 @@ function MainApp({ onLogout }) {
               </div>
             )}
 
+            {/* Panel stock de premios */}
+            {selCon.tipo==="ganador_directo"&&parseInt(selCon.stockTotal)>0&&(()=>{
+              const total=parseInt(selCon.stockTotal)||0;
+              const usados=parseInt(selCon.stockUsado)||0;
+              const restantes=total-usados;
+              const pct=Math.min(Math.round((usados/total)*100),100);
+              const agotado=restantes<=0;
+              return(
+                <div className="card" style={{padding:"14px 18px",marginBottom:16}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,flexWrap:"wrap",gap:8}}>
+                    <div>
+                      <span style={{fontWeight:700,fontSize:13,color:agotado?C.red:C.text}}>🎁 Stock de premios: </span>
+                      <span style={{fontWeight:800,fontSize:15,color:agotado?C.red:C.green}}>{restantes}</span>
+                      <span style={{color:C.muted,fontSize:12}}> de {total} disponibles · {usados} entregados</span>
+                    </div>
+                    {agotado&&selCon.estado==="activo"&&(
+                      <button className="btn-ghost" style={{fontSize:12,padding:"4px 12px"}}
+                        onClick={()=>{const extra=prompt("¿Cuántos premios más querés agregar?","10");if(extra&&parseInt(extra)>0){const newTotal=total+parseInt(extra);api("extenderStock",{concursoId:selCon.id,stockTotal:newTotal});setConcursos(p=>p.map(c=>c.id===selCon.id?{...c,stockTotal:newTotal}:c));showToast("Stock ampliado a "+newTotal+" ✓");}}}>
+                        ➕ Agregar más premios
+                      </button>
+                    )}
+                  </div>
+                  <div style={{height:8,background:C.border,borderRadius:4,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:pct+"%",background:agotado?C.red:restantes<=total*.2?C.warn:C.green,borderRadius:4,transition:"width .5s"}}/>
+                  </div>
+                  {agotado&&<p style={{color:C.red,fontSize:12,fontWeight:600,marginTop:6}}>⚠️ Premios agotados. Podés agregar más para continuar.</p>}
+                  {!agotado&&restantes<=total*.2&&<p style={{color:C.warn,fontSize:12,fontWeight:600,marginTop:6}}>⚠️ Quedan pocos premios ({restantes}).</p>}
+                </div>
+              );
+            })()}
+
+            {/* Panel elegir cantidad al dar premio */}
+            {pickingWinner&&(
+              <div className="card fade-in" style={{padding:"16px 18px",marginBottom:16,border:`2px solid ${C.green}`}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
+                  <div>
+                    <span style={{fontWeight:700,fontSize:14}}>🏆 Dar premio a </span>
+                    <span style={{fontWeight:800,fontSize:15,color:C.green}}>{pickingWinner.nombre}</span>
+                  </div>
+                  <button className="btn-ghost" style={{padding:"4px 10px",fontSize:12}} onClick={()=>{setPickingWinner(null);setCantGanada(1);}}>✕ Cancelar</button>
+                </div>
+                <Lbl>¿Cuántos premios le das?</Lbl>
+                {(()=>{
+                  const total=parseInt(selCon.stockTotal)||0;
+                  const usados=parseInt(selCon.stockUsado)||0;
+                  const restantes=total>0?total-usados:99;
+                  const maxOpts=Math.min(restantes,20);
+                  const opciones=total>0?Array.from({length:maxOpts},(_,i)=>i+1):Array.from({length:20},(_,i)=>i+1);
+                  return(
+                    <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+                      <select className="sel" value={cantGanada} onChange={e=>setCantGanada(parseInt(e.target.value))} style={{width:"auto",minWidth:120}}>
+                        {opciones.map(n=><option key={n} value={n}>{n} {n===1?"entrada":"entradas"}</option>)}
+                      </select>
+                      <button className="btn-green" style={{padding:"9px 20px"}} onClick={()=>marcarGanadorDirecto(pickingWinner,cantGanada)}>
+                        Confirmar
+                      </button>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
             {/* Panel extender fecha */}
             {extendiendo&&(
               <div className="card fade-in" style={{padding:"14px 18px",marginBottom:16,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
@@ -943,8 +1019,10 @@ function MainApp({ onLogout }) {
                     <div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap",justifyContent:"flex-end"}}>
                       {(selCon.ganadorId===o.id||selCon.tipo==="ganador_directo")&&<span className="tag-ok">🏆 Ganó</span>}
                       {isRecent(o)&&selCon.ganadorId!==o.id&&<span className="tag-warn">⚠{daysSince(o.ultimoWin)}d</span>}
-                      {selCon.estado==="activo"&&selCon.tipo==="ganador_directo"&&selCon.ganadorId!==o.id&&(
-                        <button className="btn-green btn-sm" onClick={()=>marcarGanadorDirecto(o)}>✓ Ganador</button>
+                      {selCon.estado==="activo"&&selCon.tipo==="ganador_directo"&&(
+                        pickingWinner?.id===o.id
+                          ? null
+                          : <button className="btn-green btn-sm" onClick={()=>{setPickingWinner(o);setCantGanada(1);}}>🏆 Dar premio</button>
                       )}
                     </div>
                   </div>
@@ -1037,7 +1115,13 @@ function MainApp({ onLogout }) {
                 </div>
               ))}
             </div>
-            <button className="btn" onClick={updateConcurso} disabled={saving} style={{width:"100%",padding:13}}>{saving?"Guardando...":"Guardar cambios"}</button>
+            {editConForm.tipo==="ganador_directo"&&(
+              <div style={{marginTop:4}}>
+                <Lbl>Cantidad total de premios</Lbl>
+                <input className="inp" type="number" min="1" placeholder="Vacío = ilimitado" value={editConForm.stockTotal} onChange={e=>setEditConForm(p=>({...p,stockTotal:e.target.value}))}/>
+              </div>
+            )}
+            <button className="btn" onClick={updateConcurso} disabled={saving} style={{width:"100%",padding:13,marginTop:16}}>{saving?"Guardando...":"Guardar cambios"}</button>
           </div>
         )}
 
@@ -1067,7 +1151,14 @@ function MainApp({ onLogout }) {
                 </div>
               ))}
             </div>
-            <button className="btn" onClick={addConcurso} disabled={saving} style={{width:"100%",padding:13}}>{saving?"Guardando...":"Crear concurso"}</button>
+            {conForm.tipo==="ganador_directo"&&(
+              <div style={{marginTop:4}}>
+                <Lbl>Cantidad de premios disponibles (opcional)</Lbl>
+                <input className="inp" type="number" min="1" placeholder="Ej: 40 — dejalo vacío si es ilimitado" value={conForm.stockTotal} onChange={e=>setConForm(p=>({...p,stockTotal:e.target.value}))}/>
+                <p style={{color:C.muted,fontSize:11,marginTop:5}}>El sistema te avisará cuando se agoten los premios.</p>
+              </div>
+            )}
+            <button className="btn" onClick={addConcurso} disabled={saving} style={{width:"100%",padding:13,marginTop:16}}>{saving?"Guardando...":"Crear concurso"}</button>
           </div>
         )}
 
@@ -1115,7 +1206,7 @@ function MainApp({ onLogout }) {
 }
 
 /* ─── CONFIG ── */
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz2SKc0dzhL_Auy4KUhgI9v3BkenGWtgVHBoTzH6Mp1Uj7NqYK4VNgQUrkupoGkFzUU/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbx4CafPbrXpyQO60Ub2hCvWyG6ZVT0U8JDIvzRMLeXPgCg_W9wxCGW53EVlpXwdZIJ9/exec";
 const ACCESS_PASSWORD = "mph951";
 
 export default function App() {
