@@ -384,11 +384,11 @@ function MainApp({onLogout,currentUser}){
       setConcursos(p=>p.map(c=>c.id===selCon.id?{...c,stockUsado:su,ganadorId:oyente.id,ganadorNombre:oyente.nombre}:c));
       setOyentes(p=>p.map(o=>o.id===oyente.id?{...o,totalWins:nw,ultimoWin:today()}:o));
       setPickingWinner(null);setCantGanada(1);
-      const msg=`\u00a1Hola ${oyente.nombre}! \uD83C\uDF89 \u00a1Felicitaciones! Gan\u00e1s ${qty>1?qty+" entradas":"una entrada"} para ${selCon.nombre} (${selCon.premio}). Comuni\u00e1te con nosotros para coordinar la entrega. \u2014 Metro Power Hits \uD83D\uDCFB`;
+      const msg=`¡Hola ${oyente.nombre}! 🎉 ¡Felicitaciones! Ganás ${qty>1?qty+" entradas":"una entrada"} para ${selCon.nombre} (${selCon.premio}). Comuniáte con nosotros para coordinar la entrega. — Metro Power Hits 📻`;
       setWaMsg(msg);
       const sinStock=st>0&&su>=st;
-      if(sinStock)showToast(`\uD83C\uDFC6 ${oyente.nombre} \u00b7 \u26a0\ufe0f \u00a1Sin stock!`,"win");
-      else showToast(`\uD83C\uDFC6 ${oyente.nombre} gan\u00f3 ${qty} entrada${qty>1?"s":""}`, "win");
+      if(sinStock)showToast(`🏆 ${oyente.nombre} · ⚠️ ¡Sin stock!`,"win");
+      else showToast(`🏆 ${oyente.nombre} ganó ${qty} entrada${qty>1?"s":""}`, "win");
     }catch(e){showToast("Error: "+e.message,"err");}
   };
 
@@ -397,12 +397,12 @@ function MainApp({onLogout,currentUser}){
     catch(e){showToast("Error: "+e.message,"err");}setConfirm(null);
   };
   const reactivarConcurso=async(conId)=>{
-    try{await api("reactivarConcurso",{concursoId:conId,operadorId:opId,operadorNombre:opNombre});setConcursos(p=>p.map(c=>c.id===conId?{...c,estado:"activo"}:c));showToast("Concurso reactivado \u2713");}
+    try{await api("reactivarConcurso",{concursoId:conId,operadorId:opId,operadorNombre:opNombre});setConcursos(p=>p.map(c=>c.id===conId?{...c,estado:"activo"}:c));showToast("Concurso reactivado ✓");}
     catch(e){showToast("Error: "+e.message,"err");}
   };
   const extenderConcurso=async(conId,nf)=>{
-    if(!nf){showToast("Seleccion\u00e1 una fecha","err");return;}
-    try{await api("extenderConcurso",{concursoId:conId,fechaHasta:nf,operadorId:opId,operadorNombre:opNombre});setConcursos(p=>p.map(c=>c.id===conId?{...c,fechaHasta:nf}:c));setExtendiendo(false);setNuevaFecha("");showToast("Extendido hasta "+fmtDate(nf)+" \u2713");}
+    if(!nf){showToast("Seleccioná una fecha","err");return;}
+    try{await api("extenderConcurso",{concursoId:conId,fechaHasta:nf,operadorId:opId,operadorNombre:opNombre});setConcursos(p=>p.map(c=>c.id===conId?{...c,fechaHasta:nf}:c));setExtendiendo(false);setNuevaFecha("");showToast("Extendido hasta "+fmtDate(nf)+" ✓");}
     catch(e){showToast("Error: "+e.message,"err");}
   };
   const eliminarConcurso=async(conId)=>{
@@ -428,22 +428,22 @@ function MainApp({onLogout,currentUser}){
           setOyentes(p=>p.map(o=>o.id===winner.id?{...o,totalWins:nw,ultimoWin:today()}:o));
           if(i===0)setConcursos(p=>p.map(c=>c.id===selCon.id?{...c,estado:"finalizado",ganadorId:winner.id,ganadorNombre:winner.nombre}:c));
         });
-        showToast(`\uD83C\uDFC6 ${n} ganador${n>1?"es":""} sorteado${n>1?"s":""}!`,"win");
+        showToast(`🏆 ${n} ganador${n>1?"es":""} sorteado${n>1?"s":""}!`,"win");
       }
     },70);
   };
 
   /* ── Usuarios ── */
   const addUsuario=async()=>{
-    if(!userForm.nombre||!userForm.apellido||!userForm.password){setFormErr("Nombre, apellido y contrase\u00f1a son obligatorios.");return;}
-    if(userForm.password===ADMIN_PASSWORD){setFormErr("Esa contrase\u00f1a est\u00e1 reservada para el administrador.");return;}
+    if(!userForm.nombre||!userForm.apellido||!userForm.password){setFormErr("Nombre, apellido y contraseña son obligatorios.");return;}
+    if(userForm.password===ADMIN_PASSWORD){setFormErr("Esa contraseña está reservada para el administrador.");return;}
     setSaving(true);
     try{
       const newU={id:uid(),...userForm,fechaCreacion:today(),activo:"si",creadoPorId:opId,creadoPorNombre:opNombre};
       const res=await api("addUsuario",newU);
       if(res&&!res.ok&&res.error){setFormErr(res.error);return;}
       setUsuarios(p=>[...p,newU]);setUserForm(emptyUser);
-      showToast(`Usuario ${newU.nombre} ${newU.apellido} creado \u2713`);
+      showToast(`Usuario ${newU.nombre} ${newU.apellido} creado ✓`);
     }catch(e){setFormErr("Error: "+e.message);}
     finally{setSaving(false);}
   };
@@ -452,19 +452,19 @@ function MainApp({onLogout,currentUser}){
     try{
       await api("deleteUsuario",{usuarioId,operadorId:opId,operadorNombre:opNombre});
       setUsuarios(p=>p.filter(u=>u.id!==usuarioId));
-      showToast("Usuario dado de baja \u2713");
+      showToast("Usuario dado de baja ✓");
     }catch(e){showToast("Error: "+e.message,"err");}
     setConfirm(null);
   };
 
   const cambiarPassword=async(usuarioId,newPw)=>{
-    if(!newPw||newPw.length<4){setFormErr("M\u00ednimo 4 caracteres.");return;}
-    if(newPw===ADMIN_PASSWORD){setFormErr("Esa contrase\u00f1a est\u00e1 reservada.");return;}
+    if(!newPw||newPw.length<4){setFormErr("Mínimo 4 caracteres.");return;}
+    if(newPw===ADMIN_PASSWORD){setFormErr("Esa contraseña está reservada.");return;}
     setSaving(true);
     try{
       await api("updateUsuarioPassword",{usuarioId,newPassword:newPw,operadorId:opId,operadorNombre:opNombre});
       setNewPwForm({id:"",pw:""});setFormErr("");
-      showToast("Contrase\u00f1a actualizada \u2713");
+      showToast("Contraseña actualizada ✓");
     }catch(e){setFormErr("Error: "+e.message);}
     finally{setSaving(false);}
   };
@@ -477,8 +477,8 @@ function MainApp({onLogout,currentUser}){
       const wb=new ExcelJS.Workbook();wb.creator="Metro Power Hits";wb.created=new Date();
       const ws=wb.addWorksheet("Oyentes",{views:[{state:"frozen",ySplit:2}]});
       ws.mergeCells("A1:M1");
-      const tc=ws.getCell("A1");tc.value="METRO POWER HITS \u2014 Base de Oyentes";tc.font={name:"Arial",bold:true,size:14,color:{argb:"FFFFFFFF"}};tc.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF0EA5E9"}};tc.alignment={horizontal:"center",vertical:"middle"};ws.getRow(1).height=30;
-      const COLS=[{h:"Nombre",k:"nombre",w:28},{h:"Tel\u00e9fono",k:"telefono",w:18},{h:"DNI",k:"dni",w:13},{h:"Email",k:"email",w:26},{h:"Edad",k:"edad",w:8},{h:"Localidad",k:"localidad",w:20},{h:"G\u00e9nero",k:"genero",w:10},{h:"Particip.",k:"veces",w:12},{h:"Premios",k:"totalWins",w:12},{h:"\u00dalt.Premio",k:"ultimoWin",w:14},{h:"Nota",k:"nota",w:24},{h:"Registrado por",k:"creadoPor",w:22},{h:"Modificado por",k:"modificadoPor",w:22}];
+      const tc=ws.getCell("A1");tc.value="METRO POWER HITS — Base de Oyentes";tc.font={name:"Arial",bold:true,size:14,color:{argb:"FFFFFFFF"}};tc.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF0EA5E9"}};tc.alignment={horizontal:"center",vertical:"middle"};ws.getRow(1).height=30;
+      const COLS=[{h:"Nombre",k:"nombre",w:28},{h:"Teléfono",k:"telefono",w:18},{h:"DNI",k:"dni",w:13},{h:"Email",k:"email",w:26},{h:"Edad",k:"edad",w:8},{h:"Localidad",k:"localidad",w:20},{h:"Género",k:"genero",w:10},{h:"Particip.",k:"veces",w:12},{h:"Premios",k:"totalWins",w:12},{h:"Últ.Premio",k:"ultimoWin",w:14},{h:"Nota",k:"nota",w:24},{h:"Registrado por",k:"creadoPor",w:22},{h:"Modificado por",k:"modificadoPor",w:22}];
       ws.columns=COLS.map(c=>({key:c.k,width:c.w}));
       const hr=ws.getRow(2);COLS.forEach((c,i)=>{const cell=hr.getCell(i+1);cell.value=c.h;cell.font={name:"Arial",bold:true,size:10,color:{argb:"FFFFFFFF"}};cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF1E3A5F"}};cell.alignment={horizontal:"center",vertical:"middle"};});hr.height=22;
       const gc=g=>g==="Mujer"?"FFFCE4EC":g==="Hombre"?"FFE3F2FD":"FFF3E5F5";
@@ -491,14 +491,14 @@ function MainApp({onLogout,currentUser}){
         if(isRecent(o))row.getCell(10).font={name:"Arial",size:10,bold:true,color:{argb:"FFD97706"}};
         row.height=18;
       });
-      const ws2=wb.addWorksheet("Estad\u00edsticas");
+      const ws2=wb.addWorksheet("Estadísticas");
       ws2.getColumn(1).width=22;ws2.getColumn(2).width=14;
       const addStat=(title,data,sr)=>{ws2.mergeCells(`A${sr}:B${sr}`);const h=ws2.getCell(`A${sr}`);h.value=title;h.font={name:"Arial",bold:true,size:11,color:{argb:"FFFFFFFF"}};h.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF0EA5E9"}};ws2.getRow(sr).height=22;data.forEach(([l,v],i)=>{const r=ws2.getRow(sr+1+i);r.getCell(1).value=l;r.getCell(1).font={name:"Arial",size:10};r.getCell(2).value=v;r.getCell(2).font={name:"Arial",size:10,bold:true,color:{argb:"FF0EA5E9"}};r.getCell(2).alignment={horizontal:"right"};});return sr+data.length+2;};
       const ed={"18-25":0,"26-35":0,"36-45":0,"46+":0};oyentes.forEach(o=>{const e=parseInt(o.edad);if(!e)return;if(e<=25)ed["18-25"]++;else if(e<=35)ed["26-35"]++;else if(e<=45)ed["36-45"]++;else ed["46+"]++;});
       const gen={Mujer:0,Hombre:0,Otro:0};oyentes.forEach(o=>{if(o.genero==="Mujer")gen.Mujer++;else if(o.genero==="Hombre")gen.Hombre++;else if(o.genero)gen.Otro++;});
-      let r=1;r=addStat("\uD83D\uDCCA Resumen",[["Total",oyentes.length],["Con premios",oyentes.filter(o=>parseInt(o.totalWins)>0).length],["Ganaron en 30d",oyentes.filter(o=>isRecent(o)).length]],r);r=addStat("\uD83C\uDF82 Edades",Object.entries(ed).map(([k,v])=>[k+" a\u00f1os",v]),r);r=addStat("\uD83D\uDC64 G\u00e9nero",Object.entries(gen),r);
+      let r=1;r=addStat("📊 Resumen",[["Total",oyentes.length],["Con premios",oyentes.filter(o=>parseInt(o.totalWins)>0).length],["Ganaron en 30d",oyentes.filter(o=>isRecent(o)).length]],r);r=addStat("🎂 Edades",Object.entries(ed).map(([k,v])=>[k+" años",v]),r);r=addStat("👤 Género",Object.entries(gen),r);
       const buf=await wb.xlsx.writeBuffer();const blob=new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="MetroPowerHits_Oyentes.xlsx";a.click();URL.revokeObjectURL(url);
-      showToast("Excel generado \u2713");
+      showToast("Excel generado ✓");
     }catch(e){showToast("Error: "+e.message,"err");}
   };
 
@@ -509,8 +509,8 @@ function MainApp({onLogout,currentUser}){
       const ExcelJS=(await import("exceljs")).default;
       const wb=new ExcelJS.Workbook();wb.creator="Metro Power Hits";
       const ws=wb.addWorksheet("Participantes");
-      ws.mergeCells("A1:H1");const tc=ws.getCell("A1");tc.value=`${con.nombre} \u2014 ${con.premio}`;tc.font={name:"Arial",bold:true,size:13,color:{argb:"FFFFFFFF"}};tc.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF10B981"}};tc.alignment={horizontal:"center",vertical:"middle"};ws.getRow(1).height=28;
-      const COLS=[{h:"Nombre",k:"nombre",w:28},{h:"Tel\u00e9fono",k:"telefono",w:18},{h:"DNI",k:"dni",w:13},{h:"Email",k:"email",w:24},{h:"Localidad",k:"localidad",w:18},{h:"Premios",k:"_qty",w:12},{h:"Fecha",k:"_fecha",w:14},{h:"Operador",k:"_op",w:22}];
+      ws.mergeCells("A1:H1");const tc=ws.getCell("A1");tc.value=`${con.nombre} — ${con.premio}`;tc.font={name:"Arial",bold:true,size:13,color:{argb:"FFFFFFFF"}};tc.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF10B981"}};tc.alignment={horizontal:"center",vertical:"middle"};ws.getRow(1).height=28;
+      const COLS=[{h:"Nombre",k:"nombre",w:28},{h:"Teléfono",k:"telefono",w:18},{h:"DNI",k:"dni",w:13},{h:"Email",k:"email",w:24},{h:"Localidad",k:"localidad",w:18},{h:"Premios",k:"_qty",w:12},{h:"Fecha",k:"_fecha",w:14},{h:"Operador",k:"_op",w:22}];
       ws.columns=COLS.map(c=>({key:c.k,width:c.w}));
       const hr=ws.getRow(2);COLS.forEach((c,i)=>{const cell=hr.getCell(i+1);cell.value=c.h;cell.font={name:"Arial",bold:true,size:10,color:{argb:"FFFFFFFF"}};cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF1E3A5F"}};cell.alignment={horizontal:"center",vertical:"middle"};});hr.height=22;
       const all=conPartic(conId).map(o=>{const par=participaciones.find(p=>p.concursoId===conId&&p.oyenteId===o.id);return{...o,_qty:par?.cantGanada||"1",_fecha:par?.fecha||"",_op:par?.operadorNombre||""};});
@@ -520,7 +520,7 @@ function MainApp({onLogout,currentUser}){
         row.eachCell(cell=>{cell.font={name:"Arial",size:10};cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:bg}};cell.alignment={vertical:"middle"};cell.border={bottom:{style:"hair",color:{argb:"FFDDE6F0"}}};});row.height=18;
       });
       const buf=await wb.xlsx.writeBuffer();const blob=new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`${con.nombre.replace(/\s+/g,"_")}_participantes.xlsx`;a.click();URL.revokeObjectURL(url);
-      showToast("Reporte generado \u2713");
+      showToast("Reporte generado ✓");
     }catch(e){showToast("Error: "+e.message,"err");}
   };
 
@@ -528,16 +528,16 @@ function MainApp({onLogout,currentUser}){
   const Lbl=({children})=><label style={{display:"block",fontSize:11,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>{children}</label>;
   const FErr=()=>formErr?<div style={{color:C.red,fontSize:12,background:C.red+"11",border:`1px solid ${C.red}44`,borderRadius:6,padding:"8px 12px",marginBottom:14}}>{formErr}</div>:null;
   const Title=({t,sub})=><div style={{marginBottom:22}}><h2 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:30,fontWeight:800,color:C.text,textTransform:"uppercase",letterSpacing:2,lineHeight:1}}>{t}</h2>{sub&&<p style={{color:C.muted,fontSize:13,marginTop:4}}>{sub}</p>}</div>;
-  const Back=({to,label="\u2190 Volver"})=><button className="btn-ghost" onClick={()=>nav(to)} style={{marginBottom:20}}>{label}</button>;
+  const Back=({to,label="← Volver"})=><button className="btn-ghost" onClick={()=>nav(to)} style={{marginBottom:20}}>{label}</button>;
   const Bar=({val,max,color})=><div style={{height:6,background:C.border,borderRadius:3,marginTop:4}}><div style={{height:"100%",width:`${max?Math.round((val/max)*100):0}%`,background:color||C.accent,borderRadius:3,transition:"width .6s"}}/></div>;
   const Countdown=({fechaHasta})=>{
     if(!fechaHasta)return null;
     const d=daysUntil(fechaHasta);
     if(d===null)return null;
-    if(d<0)return<span className="tag-done">Venci\u00f3 hace {Math.abs(d)}d</span>;
+    if(d<0)return<span className="tag-done">Venció hace {Math.abs(d)}d</span>;
     if(d===0)return<span className="tag-warn">Vence hoy</span>;
-    if(d<=3)return<span className="tag-warn">\u23f0 {d}d</span>;
-    return<span style={{fontSize:11,color:C.muted}}>\uD83D\uDCC5 {d}d</span>;
+    if(d<=3)return<span className="tag-warn">⏰ {d}d</span>;
+    return<span style={{fontSize:11,color:C.muted}}>📅 {d}d</span>;
   };
 
   if(loading)return(<div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center"}}><style>{css}</style><div style={{textAlign:"center"}}><div style={{width:44,height:44,border:`3px solid ${C.border}`,borderTopColor:C.accent,borderRadius:"50%",margin:"0 auto 16px",animation:"spin .8s linear infinite"}}/><p style={{color:C.muted,fontSize:14}}>Cargando datos...</p></div></div>);
@@ -554,11 +554,11 @@ function MainApp({onLogout,currentUser}){
   const filtrosActivos=!!(filtroGenero||filtroLocalidad||filtroEdad||filtroReciente);
 
   const navTabs=[
-    {id:V.DASH,icon:"\u25c9",label:"Inicio"},
-    {id:V.OYENTES,icon:"\uD83D\uDC65",label:"Oyentes"},
-    {id:V.CONS,icon:"\uD83C\uDFAF",label:"Concursos"},
-    {id:V.BUSCAR,icon:"\uD83D\uDCF1",label:"WhatsApp"},
-    ...(isAdmin?[{id:V.USUARIOS,icon:"\uD83D\uDD10",label:"Usuarios"},{id:V.ACTIVIDAD,icon:"\uD83D\uDCCB",label:"Actividad"}]:[])
+    {id:V.DASH,icon:"◉",label:"Inicio"},
+    {id:V.OYENTES,icon:"👥",label:"Oyentes"},
+    {id:V.CONS,icon:"🎯",label:"Concursos"},
+    {id:V.BUSCAR,icon:"📱",label:"WhatsApp"},
+    ...(isAdmin?[{id:V.USUARIOS,icon:"🔐",label:"Usuarios"},{id:V.ACTIVIDAD,icon:"📋",label:"Actividad"}]:[])
   ];
 
   return(
@@ -567,7 +567,7 @@ function MainApp({onLogout,currentUser}){
 
       {confirm&&confirm.type==="archivar"&&<ConfirmModal C={C} title="Archivar concurso" msg="El concurso deja de verse en el inicio. Los datos de participantes se conservan." confirmLabel="Archivar" confirmClass="btn-ghost" onConfirm={()=>archivarConcurso(confirm.id)} onCancel={()=>setConfirm(null)}/>}
       {confirm&&confirm.type==="eliminar"&&<ConfirmModal C={C} title="Eliminar concurso" msg="Esto elimina el concurso permanentemente. Los oyentes conservan el historial en su perfil." confirmLabel="Eliminar definitivamente" confirmClass="btn-red" onConfirm={()=>eliminarConcurso(confirm.id)} onCancel={()=>setConfirm(null)}/>}
-      {confirm&&confirm.type==="baja_usuario"&&<ConfirmModal C={C} title="Dar de baja usuario" msg={`Se va a desactivar el acceso de ${confirm.nombre}. Podr\u00e9s reactivarlo cuando quieras.`} confirmLabel="Dar de baja" confirmClass="btn-red" onConfirm={()=>bajaUsuario(confirm.id)} onCancel={()=>setConfirm(null)}/>}
+      {confirm&&confirm.type==="baja_usuario"&&<ConfirmModal C={C} title="Dar de baja usuario" msg={`Se va a desactivar el acceso de ${confirm.nombre}. Podrés reactivarlo cuando quieras.`} confirmLabel="Dar de baja" confirmClass="btn-red" onConfirm={()=>bajaUsuario(confirm.id)} onCancel={()=>setConfirm(null)}/>}
 
       {/* HEADER */}
       <div style={{background:C.headerBg,borderBottom:`1px solid ${C.border}`,padding:"10px 16px",display:"flex",alignItems:"center",gap:8,position:"sticky",top:0,zIndex:200,boxShadow:C.shadow,flexWrap:"wrap"}}>
@@ -576,11 +576,11 @@ function MainApp({onLogout,currentUser}){
         <span style={{background:isAdmin?C.accent+"22":C.warn+"22",color:isAdmin?C.accent:C.warn,border:`1px solid ${isAdmin?C.accent:C.warn}44`,borderRadius:4,padding:"2px 8px",fontSize:10,fontWeight:700}}>
           {isAdmin?"ADMIN":`${currentUser.nombre} ${currentUser.apellido}`.trim()}
         </span>
-        <button onClick={exportExcelOyentes} style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:6,padding:"4px 10px",color:C.muted,fontSize:11,fontWeight:600}}>\u2b07 Excel</button>
-        <button onClick={()=>nav(V.OY_QUICK)} style={{background:C.green,color:"#fff",border:"none",borderRadius:6,padding:"4px 12px",fontSize:11,fontWeight:700}}>\u26a1 R\u00e1pido</button>
-        <button onClick={()=>setDark(d=>!d)} style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:16,padding:"4px 12px",color:C.muted,fontSize:11,fontWeight:600}}>{dark?"\u2600\ufe0f":"\uD83C\uDF19"}</button>
-        <button onClick={()=>{loadAll();showToast("Actualizado \u2713");}} style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:6,padding:"4px 10px",color:C.muted,fontSize:11}}>\u21ba</button>
-        {isAdmin&&<button onClick={async()=>{await api("repairConcursos");await loadAll();showToast("Reparado \u2713");}} style={{background:"transparent",border:`1px solid ${C.warn}`,borderRadius:6,padding:"4px 8px",color:C.warn,fontSize:10,fontWeight:600}} title="Reparar datos viejos">\uD83D\uDD27</button>}
+        <button onClick={exportExcelOyentes} style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:6,padding:"4px 10px",color:C.muted,fontSize:11,fontWeight:600}}>⬇ Excel</button>
+        <button onClick={()=>nav(V.OY_QUICK)} style={{background:C.green,color:"#fff",border:"none",borderRadius:6,padding:"4px 12px",fontSize:11,fontWeight:700}}>⚡ Rápido</button>
+        <button onClick={()=>setDark(d=>!d)} style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:16,padding:"4px 12px",color:C.muted,fontSize:11,fontWeight:600}}>{dark?"☀️":"🌙"}</button>
+        <button onClick={()=>{loadAll();showToast("Actualizado ✓");}} style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:6,padding:"4px 10px",color:C.muted,fontSize:11}}>↺</button>
+        {isAdmin&&<button onClick={async()=>{await api("repairConcursos");await loadAll();showToast("Reparado ✓");}} style={{background:"transparent",border:`1px solid ${C.warn}`,borderRadius:6,padding:"4px 8px",color:C.warn,fontSize:10,fontWeight:600}} title="Reparar datos viejos">🔧</button>}
         <button onClick={onLogout} style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:6,padding:"4px 10px",color:C.muted,fontSize:11}}>Salir</button>
       </div>
 
@@ -602,10 +602,10 @@ function MainApp({onLogout,currentUser}){
             <p style={{color:C.muted,fontSize:12,marginBottom:16}}>{new Date().toLocaleDateString("es-AR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
             <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,marginBottom:20}}>
               {[
-                {title:"OYENTES",sub:"Buscar por nombre, Cel o DNI",icon:"\uD83D\uDC65",color:C.accent,action:()=>nav(V.OYENTES)},
-                {title:"CONCURSOS ACTIVOS",sub:consActivos.length+" concurso"+(consActivos.length!==1?"s":"")+" en curso",icon:"\uD83C\uDFAF",color:C.warn,action:()=>nav(V.CONS)},
-                {title:"WHATSAPP",sub:"Buscar oyente por su WhatsApp",icon:"\uD83D\uDCF1",color:C.green,action:()=>nav(V.BUSCAR)},
-                {title:"VER ESTAD\u00cdSTICAS",sub:"Edades, g\u00e9neros y actividad",icon:"\uD83D\uDCCA",color:"#A855F7",action:()=>nav(V.STATS)},
+                {title:"OYENTES",sub:"Buscar por nombre, Cel o DNI",icon:"👥",color:C.accent,action:()=>nav(V.OYENTES)},
+                {title:"CONCURSOS ACTIVOS",sub:consActivos.length+" concurso"+(consActivos.length!==1?"s":"")+" en curso",icon:"🎯",color:C.warn,action:()=>nav(V.CONS)},
+                {title:"WHATSAPP",sub:"Buscar oyente por su WhatsApp",icon:"📱",color:C.green,action:()=>nav(V.BUSCAR)},
+                {title:"VER ESTADÍSTICAS",sub:"Edades, géneros y actividad",icon:"📊",color:"#A855F7",action:()=>nav(V.STATS)},
               ].map(({title,sub,icon,color,action})=>(
                 <div key={title} className="card row" onClick={action} style={{padding:"22px 18px",cursor:"pointer",borderLeft:`4px solid ${color}`,transition:"transform .15s"}} onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"} onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
                   <div style={{fontSize:28,marginBottom:8}}>{icon}</div>
@@ -614,9 +614,9 @@ function MainApp({onLogout,currentUser}){
                 </div>
               ))}
             </div>
-            {stats.recentW>0&&<div style={{background:C.warn+"11",border:`1px solid ${C.warn}44`,borderRadius:10,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>\u26a0\ufe0f</span><span style={{color:C.warn,fontSize:13,fontWeight:600}}>{stats.recentW} oyente{stats.recentW>1?"s":""} ganaron un premio en los \u00faltimos 30 d\u00edas.</span></div>}
+            {stats.recentW>0&&<div style={{background:C.warn+"11",border:`1px solid ${C.warn}44`,borderRadius:10,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>⚠️</span><span style={{color:C.warn,fontSize:13,fontWeight:600}}>{stats.recentW} oyente{stats.recentW>1?"s":""} ganaron un premio en los últimos 30 días.</span></div>}
             <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
-              {[[stats.total,"\uD83D\uDC65","Oyentes",C.accent],[stats.consActivos,"\uD83C\uDFAF","Activos",C.warn],[stats.ganadores,"\uD83C\uDFC6","Ganadores",C.green],[stats.promEdad?stats.promEdad+"a":"\u2014","\uD83D\uDCCA","Edad prom.","#A855F7"]].map(([v,ic,l,col],i)=>(
+              {[[stats.total,"👥","Oyentes",C.accent],[stats.consActivos,"🎯","Activos",C.warn],[stats.ganadores,"🏆","Ganadores",C.green],[stats.promEdad?stats.promEdad+"a":"—","📊","Edad prom.","#A855F7"]].map(([v,ic,l,col],i)=>(
                 <div key={i} className="card" style={{padding:"10px 12px",textAlign:"center"}}>
                   <div style={{fontSize:14,marginBottom:2}}>{ic}</div>
                   <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:22,fontWeight:800,color:col,lineHeight:1}}>{v}</div>
@@ -631,16 +631,16 @@ function MainApp({onLogout,currentUser}){
         {view===V.STATS&&(
           <div className="fade-in">
             <Back to={V.DASH}/>
-            <Title t="Estad\u00edsticas" sub="Resumen de la base de oyentes"/>
+            <Title t="Estadísticas" sub="Resumen de la base de oyentes"/>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:14}}>
               <div className="card" style={{padding:18}}>
                 <h3 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:15,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:14}}>Rango de edades</h3>
-                {Object.entries(stats.rangos).map(([r,n])=>{const max=Math.max(...Object.values(stats.rangos),1);return(<div key={r} style={{marginBottom:9}}><div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:2}}><span style={{color:C.muted}}>{r} a\u00f1os</span><span style={{fontWeight:700}}>{n}</span></div><Bar val={n} max={max} color={C.accent}/></div>);})}
+                {Object.entries(stats.rangos).map(([r,n])=>{const max=Math.max(...Object.values(stats.rangos),1);return(<div key={r} style={{marginBottom:9}}><div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:2}}><span style={{color:C.muted}}>{r} años</span><span style={{fontWeight:700}}>{n}</span></div><Bar val={n} max={max} color={C.accent}/></div>);})}
               </div>
               <div className="card" style={{padding:18}}>
-                <h3 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:15,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:14}}>G\u00e9nero</h3>
+                <h3 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:15,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:14}}>Género</h3>
                 {Object.entries(stats.generos).map(([g,n])=>{const max=Math.max(...Object.values(stats.generos),1);const col=g==="Mujer"?"#EC4899":g==="Hombre"?"#3B82F6":"#8B5CF6";return(<div key={g} style={{marginBottom:9}}><div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:2}}><span style={{color:C.muted}}>{g}</span><span style={{fontWeight:700}}>{n}</span></div><Bar val={n} max={max} color={col}/></div>);})}
-                {Object.values(stats.generos).every(n=>n===0)&&<p style={{color:C.muted,fontSize:12}}>Sin datos a\u00fan</p>}
+                {Object.values(stats.generos).every(n=>n===0)&&<p style={{color:C.muted,fontSize:12}}>Sin datos aún</p>}
               </div>
               <div className="card" style={{padding:18}}>
                 <h3 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:15,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:14}}>Concursos activos</h3>
@@ -659,7 +659,7 @@ function MainApp({onLogout,currentUser}){
         {/* ── GESTIÓN DE USUARIOS (solo admin) ── */}
         {view===V.USUARIOS&&isAdmin&&(
           <div className="fade-in">
-            <Title t="Gestión de Usuarios" sub="Solo vos pod\u00e9s ver esta pantalla"/>
+            <Title t="Gestión de Usuarios" sub="Solo vos podés ver esta pantalla"/>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,alignItems:"start"}}>
               {/* Formulario nuevo usuario */}
               <div className="card" style={{padding:20}}>
@@ -668,37 +668,37 @@ function MainApp({onLogout,currentUser}){
                 <Lbl>Nombre *</Lbl>
                 <input className="inp" placeholder="Juan" value={userForm.nombre} onChange={e=>{setUserForm(p=>({...p,nombre:e.target.value}));setFormErr("");}} style={{marginBottom:10}}/>
                 <Lbl>Apellido *</Lbl>
-                <input className="inp" placeholder="P\u00e9rez" value={userForm.apellido} onChange={e=>{setUserForm(p=>({...p,apellido:e.target.value}));setFormErr("");}} style={{marginBottom:10}}/>
+                <input className="inp" placeholder="Pérez" value={userForm.apellido} onChange={e=>{setUserForm(p=>({...p,apellido:e.target.value}));setFormErr("");}} style={{marginBottom:10}}/>
                 <Lbl>Puesto</Lbl>
                 <input className="inp" placeholder="Productor" value={userForm.puesto} onChange={e=>setUserForm(p=>({...p,puesto:e.target.value}))} style={{marginBottom:10}}/>
-                <Lbl>Contrase\u00f1a *</Lbl>
+                <Lbl>Contraseña *</Lbl>
                 <input className="inp" placeholder="Por ej. su DNI: 32456789" value={userForm.password} onChange={e=>{setUserForm(p=>({...p,password:e.target.value}));setFormErr("");}} style={{marginBottom:16}}/>
-                <p style={{color:C.muted,fontSize:11,marginBottom:16,lineHeight:1.6}}>La contrase\u00f1a puede ser el DNI del empleado u otra combinaci\u00f3n \u00fanica. Cada usuario tendr\u00e1 su propio acceso.</p>
+                <p style={{color:C.muted,fontSize:11,marginBottom:16,lineHeight:1.6}}>La contraseña puede ser el DNI del empleado u otra combinación única. Cada usuario tendrá su propio acceso.</p>
                 <button className="btn" onClick={addUsuario} disabled={saving} style={{width:"100%",padding:11}}>{saving?"Guardando...":"Crear usuario"}</button>
               </div>
 
               {/* Lista usuarios activos */}
               <div className="card" style={{padding:20}}>
                 <h3 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:16,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:16}}>Usuarios activos ({usuarios.length})</h3>
-                {usuarios.length===0&&<p style={{color:C.muted,fontSize:13}}>No hay usuarios creados a\u00fan.</p>}
+                {usuarios.length===0&&<p style={{color:C.muted,fontSize:13}}>No hay usuarios creados aún.</p>}
                 {usuarios.map(u=>(
                   <div key={u.id} style={{borderBottom:`1px solid ${C.border}`,padding:"12px 0"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,flexWrap:"wrap"}}>
                       <div>
                         <div style={{fontWeight:700,fontSize:14}}>{u.nombre} {u.apellido}</div>
-                        <div style={{color:C.muted,fontSize:12}}>{u.puesto||"Sin puesto"} \u00b7 Desde {fmtDate(u.fechaCreacion)}</div>
-                        <div style={{fontSize:11,color:C.muted,marginTop:2}}>Contrase\u00f1a: <span style={{fontFamily:"monospace",background:C.bg,padding:"1px 6px",borderRadius:4,border:`1px solid ${C.border}`}}>{u.password}</span></div>
+                        <div style={{color:C.muted,fontSize:12}}>{u.puesto||"Sin puesto"} · Desde {fmtDate(u.fechaCreacion)}</div>
+                        <div style={{fontSize:11,color:C.muted,marginTop:2}}>Contraseña: <span style={{fontFamily:"monospace",background:C.bg,padding:"1px 6px",borderRadius:4,border:`1px solid ${C.border}`}}>{u.password}</span></div>
                       </div>
                       <button className="btn-red btn-sm" onClick={()=>setConfirm({type:"baja_usuario",id:u.id,nombre:u.nombre+" "+u.apellido})}>Dar de baja</button>
                     </div>
                     {/* Cambiar contraseña */}
                     {newPwForm.id===u.id
                       ?<div style={{marginTop:10,display:"flex",gap:8,flexWrap:"wrap"}}>
-                          <input className="inp" placeholder="Nueva contrase\u00f1a" value={newPwForm.pw} onChange={e=>{setNewPwForm(p=>({...p,pw:e.target.value}));setFormErr("");}} style={{flex:1,minWidth:120,padding:"7px 10px",fontSize:12}}/>
+                          <input className="inp" placeholder="Nueva contraseña" value={newPwForm.pw} onChange={e=>{setNewPwForm(p=>({...p,pw:e.target.value}));setFormErr("");}} style={{flex:1,minWidth:120,padding:"7px 10px",fontSize:12}}/>
                           <button className="btn btn-sm" onClick={()=>cambiarPassword(u.id,newPwForm.pw)} style={{textTransform:"none",letterSpacing:0}}>Guardar</button>
                           <button className="btn-ghost btn-sm" onClick={()=>{setNewPwForm({id:"",pw:""});setFormErr("");}}>Cancelar</button>
                         </div>
-                      :<button className="btn-ghost btn-sm" style={{marginTop:8}} onClick={()=>{setNewPwForm({id:u.id,pw:""});setFormErr("");}}>Cambiar contrase\u00f1a</button>
+                      :<button className="btn-ghost btn-sm" style={{marginTop:8}} onClick={()=>{setNewPwForm({id:u.id,pw:""});setFormErr("");}}>Cambiar contraseña</button>
                     }
                     {formErr&&newPwForm.id===u.id&&<div style={{color:C.red,fontSize:11,marginTop:4}}>{formErr}</div>}
                   </div>
@@ -717,7 +717,7 @@ function MainApp({onLogout,currentUser}){
             </div>
             {actividad.length===0&&(
               <div className="card" style={{padding:32,textAlign:"center"}}>
-                <p style={{color:C.muted,fontSize:14}}>No hay actividad registrada a\u00fan.</p>
+                <p style={{color:C.muted,fontSize:14}}>No hay actividad registrada aún.</p>
                 <button className="btn" style={{marginTop:16}} onClick={loadActividad}>Cargar actividad</button>
               </div>
             )}
@@ -727,7 +727,7 @@ function MainApp({onLogout,currentUser}){
                   <table style={{width:"100%",borderCollapse:"collapse",minWidth:500}}>
                     <thead>
                       <tr style={{borderBottom:`1px solid ${C.border}`,background:C.bg}}>
-                        {["Fecha","Hora","Operador","Acci\u00f3n","Detalle"].map(h=>(
+                        {["Fecha","Hora","Operador","Acción","Detalle"].map(h=>(
                           <th key={h} style={{padding:"10px 14px",textAlign:"left",fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,whiteSpace:"nowrap"}}>{h}</th>
                         ))}
                       </tr>
@@ -745,7 +745,7 @@ function MainApp({onLogout,currentUser}){
                     </tbody>
                   </table>
                 </div>
-                {actividad.length>200&&<div style={{padding:"10px 14px",color:C.muted,fontSize:12,textAlign:"center"}}>Mostrando los 200 \u00faltimos registros de {actividad.length} totales</div>}
+                {actividad.length>200&&<div style={{padding:"10px 14px",color:C.muted,fontSize:12,textAlign:"center"}}>Mostrando los 200 últimos registros de {actividad.length} totales</div>}
               </div>
             )}
           </div>
@@ -756,15 +756,15 @@ function MainApp({onLogout,currentUser}){
           <div className="fade-in" style={{maxWidth:440}}>
             <Back to={V.OYENTES}/>
             <div style={{background:C.green+"11",border:`1px solid ${C.green}44`,borderRadius:10,padding:"12px 16px",marginBottom:20,display:"flex",gap:10,alignItems:"center"}}>
-              <span style={{fontSize:20}}>\u26a1</span>
-              <div><div style={{fontWeight:700,fontSize:14,color:C.green}}>Registro r\u00e1pido</div><div style={{color:C.muted,fontSize:12}}>Solo nombre y tel\u00e9fono. Complet\u00e1s el resto despu\u00e9s desde el perfil.</div></div>
+              <span style={{fontSize:20}}>⚡</span>
+              <div><div style={{fontWeight:700,fontSize:14,color:C.green}}>Registro rápido</div><div style={{color:C.muted,fontSize:12}}>Solo nombre y teléfono. Completás el resto después desde el perfil.</div></div>
             </div>
             <FErr/>
             <Lbl>Nombre completo *</Lbl>
             <input className="inp" type="text" placeholder="Nombre del oyente" value={quickForm.nombre} onChange={e=>{setQuickForm(p=>({...p,nombre:e.target.value}));setFormErr("");}} style={{marginBottom:14}} autoFocus/>
-            <Lbl>Tel\u00e9fono / WhatsApp *</Lbl>
+            <Lbl>Teléfono / WhatsApp *</Lbl>
             <input className="inp" type="tel" placeholder="1134567890" value={quickForm.telefono} onChange={e=>{setQuickForm(p=>({...p,telefono:e.target.value}));setFormErr("");}} style={{marginBottom:20}}/>
-            <button className="btn-green" onClick={addQuick} disabled={saving} style={{width:"100%",padding:13,fontFamily:"'Barlow Condensed',sans-serif",fontSize:16,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{saving?"Guardando...":"\u26a1 Registrar ahora"}</button>
+            <button className="btn-green" onClick={addQuick} disabled={saving} style={{width:"100%",padding:13,fontFamily:"'Barlow Condensed',sans-serif",fontSize:16,fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{saving?"Guardando...":"⚡ Registrar ahora"}</button>
           </div>
         )}
 
@@ -774,22 +774,22 @@ function MainApp({onLogout,currentUser}){
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16,gap:10,flexWrap:"wrap"}}>
               <Title t="Oyentes" sub={`${oyentesFiltrados.length}${filtrosActivos?" filtrados de "+oyentes.length+" totales":" registrados"}`}/>
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                <button className="btn-ghost" onClick={()=>nav(V.OY_QUICK)} style={{fontSize:12,color:C.green,borderColor:C.green}}>\u26a1 R\u00e1pido</button>
+                <button className="btn-ghost" onClick={()=>nav(V.OY_QUICK)} style={{fontSize:12,color:C.green,borderColor:C.green}}>⚡ Rápido</button>
                 <button className="btn" onClick={()=>nav(V.OY_NEW)}>+ Registrar</button>
               </div>
             </div>
             <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap"}}>
-              <input className="inp" placeholder="Buscar por nombre, tel\u00e9fono, DNI o localidad..." value={busqueda} onChange={e=>setBusqueda(e.target.value)} style={{flex:1,minWidth:200}}/>
+              <input className="inp" placeholder="Buscar por nombre, teléfono, DNI o localidad..." value={busqueda} onChange={e=>setBusqueda(e.target.value)} style={{flex:1,minWidth:200}}/>
               <button className={filtrosActivos?"btn":"btn-ghost"} onClick={()=>setMostrarFiltros(f=>!f)} style={{flexShrink:0,padding:"10px 14px",fontSize:12,background:filtrosActivos?C.accent:"transparent",borderColor:filtrosActivos?C.accent:C.border,color:filtrosActivos?"#fff":C.muted}}>
-                {filtrosActivos?"Filtros \u2713":"Filtros"}
+                {filtrosActivos?"Filtros ✓":"Filtros"}
               </button>
             </div>
             {mostrarFiltros&&(
               <div className="card fade-in" style={{padding:14,marginBottom:12,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10}}>
-                <div><Lbl>G\u00e9nero</Lbl><select className="sel" value={filtroGenero} onChange={e=>setFiltroGenero(e.target.value)} style={{padding:"7px 10px",fontSize:12}}><option value="">Todos</option><option>Mujer</option><option>Hombre</option><option>Otro</option></select></div>
+                <div><Lbl>Género</Lbl><select className="sel" value={filtroGenero} onChange={e=>setFiltroGenero(e.target.value)} style={{padding:"7px 10px",fontSize:12}}><option value="">Todos</option><option>Mujer</option><option>Hombre</option><option>Otro</option></select></div>
                 <div><Lbl>Localidad</Lbl><select className="sel" value={filtroLocalidad} onChange={e=>setFiltroLocalidad(e.target.value)} style={{padding:"7px 10px",fontSize:12}}><option value="">Todas</option>{localidades.map(l=><option key={l}>{l}</option>)}</select></div>
                 <div><Lbl>Edad</Lbl><select className="sel" value={filtroEdad} onChange={e=>setFiltroEdad(e.target.value)} style={{padding:"7px 10px",fontSize:12}}><option value="">Todas</option><option value="18-25">18-25</option><option value="26-35">26-35</option><option value="36-45">36-45</option><option value="46+">46+</option></select></div>
-                <div style={{display:"flex",alignItems:"flex-end",paddingBottom:2}}><label style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:12,color:C.text,fontWeight:600}}><input type="checkbox" checked={filtroReciente} onChange={e=>setFiltroReciente(e.target.checked)} style={{width:14,height:14}}/>Gan\u00f3 en 30d</label></div>
+                <div style={{display:"flex",alignItems:"flex-end",paddingBottom:2}}><label style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:12,color:C.text,fontWeight:600}}><input type="checkbox" checked={filtroReciente} onChange={e=>setFiltroReciente(e.target.checked)} style={{width:14,height:14}}/>Ganó en 30d</label></div>
                 {filtrosActivos&&<div style={{display:"flex",alignItems:"flex-end"}}><button className="btn-ghost" onClick={()=>{setFiltroGenero("");setFiltroLocalidad("");setFiltroEdad("");setFiltroReciente(false);}} style={{padding:"6px 12px",fontSize:12}}>Limpiar</button></div>}
               </div>
             )}
@@ -798,7 +798,7 @@ function MainApp({onLogout,currentUser}){
                 <table style={{width:"100%",borderCollapse:"collapse",minWidth:500}}>
                   <thead>
                     <tr style={{borderBottom:`1px solid ${C.border}`,background:C.bg}}>
-                      {["Oyente","Tel\u00e9fono","Edad","Localidad","G\u00e9nero","Particip.","Estado"].map(h=>(
+                      {["Oyente","Teléfono","Edad","Localidad","Género","Particip.","Estado"].map(h=>(
                         <th key={h} style={{padding:"11px 14px",textAlign:"left",fontSize:10,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,whiteSpace:"nowrap"}}>{h}</th>
                       ))}
                     </tr>
@@ -808,11 +808,11 @@ function MainApp({onLogout,currentUser}){
                       <tr key={o.id} className="row" style={{borderBottom:`1px solid ${C.border}`,cursor:"pointer"}} onClick={()=>nav(V.OY_DET,o.id)}>
                         <td style={{padding:"11px 14px"}}><div style={{fontWeight:600,fontSize:14}}>{o.nombre}</div><div style={{color:C.muted,fontSize:11,marginTop:1}}>DNI {o.dni}</div></td>
                         <td style={{padding:"11px 14px",fontSize:13,color:C.muted,whiteSpace:"nowrap"}}>{o.telefono}</td>
-                        <td style={{padding:"11px 14px",fontSize:13}}>{o.edad||"\u2014"}</td>
-                        <td style={{padding:"11px 14px",fontSize:13,color:C.muted}}>{o.localidad||"\u2014"}</td>
-                        <td style={{padding:"11px 14px",fontSize:13}}>{o.genero||"\u2014"}</td>
+                        <td style={{padding:"11px 14px",fontSize:13}}>{o.edad||"—"}</td>
+                        <td style={{padding:"11px 14px",fontSize:13,color:C.muted}}>{o.localidad||"—"}</td>
+                        <td style={{padding:"11px 14px",fontSize:13}}>{o.genero||"—"}</td>
                         <td style={{padding:"11px 14px",fontSize:13}}><span style={{color:C.accent,fontWeight:700}}>{o.veces||0}</span></td>
-                        <td style={{padding:"11px 14px"}}>{isRecent(o)?<span className="tag-warn">\u26a0 {daysSince(o.ultimoWin)}d</span>:parseInt(o.totalWins)>0?<span className="tag-ok">\uD83C\uDFC6 {o.totalWins}</span>:<span style={{color:C.muted,fontSize:12}}>Sin premios</span>}</td>
+                        <td style={{padding:"11px 14px"}}>{isRecent(o)?<span className="tag-warn">⚠ {daysSince(o.ultimoWin)}d</span>:parseInt(o.totalWins)>0?<span className="tag-ok">🏆 {o.totalWins}</span>:<span style={{color:C.muted,fontSize:12}}>Sin premios</span>}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -832,43 +832,43 @@ function MainApp({onLogout,currentUser}){
                 <div style={{width:56,height:56,borderRadius:"50%",background:C.accent+"22",border:`2px solid ${C.accent}`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Barlow Condensed',sans-serif",fontSize:28,fontWeight:800,flexShrink:0,color:C.accent}}>{selOy.nombre.charAt(0).toUpperCase()}</div>
                 <div>
                   <h2 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:28,fontWeight:800,textTransform:"uppercase",letterSpacing:1}}>{selOy.nombre}</h2>
-                  <p style={{color:C.muted,fontSize:13}}>Registrado el {selOy.fechaRegistro}{selOy.creadoPor?` \u00b7 por ${selOy.creadoPor}`:""}</p>
+                  <p style={{color:C.muted,fontSize:13}}>Registrado el {selOy.fechaRegistro}{selOy.creadoPor?` · por ${selOy.creadoPor}`:""}</p>
                   {selOy.modificadoPor&&<p style={{color:C.muted,fontSize:12}}>Modificado por: {selOy.modificadoPor}</p>}
                 </div>
               </div>
-              <button className="btn-ghost" onClick={()=>{setEditForm({nombre:selOy.nombre||"",telefono:selOy.telefono||"",dni:selOy.dni||"",email:selOy.email||"",edad:selOy.edad||"",localidad:selOy.localidad||"",genero:selOy.genero||"",nota:selOy.nota||""});setFormErr("");nav(V.OY_EDIT,selOy.id);}} style={{display:"flex",alignItems:"center",gap:6}}>\u270f\ufe0f Editar datos</button>
+              <button className="btn-ghost" onClick={()=>{setEditForm({nombre:selOy.nombre||"",telefono:selOy.telefono||"",dni:selOy.dni||"",email:selOy.email||"",edad:selOy.edad||"",localidad:selOy.localidad||"",genero:selOy.genero||"",nota:selOy.nota||""});setFormErr("");nav(V.OY_EDIT,selOy.id);}} style={{display:"flex",alignItems:"center",gap:6}}>✏️ Editar datos</button>
             </div>
-            {isRecent(selOy)&&<div style={{background:C.warn+"11",border:`1px solid ${C.warn}44`,borderRadius:8,padding:"10px 16px",marginBottom:16,display:"flex",gap:8,alignItems:"center"}}><span>\u26a0\ufe0f</span><span style={{color:C.warn,fontWeight:600,fontSize:13}}>Gan\u00f3 un premio hace {daysSince(selOy.ultimoWin)} d\u00edas.</span></div>}
+            {isRecent(selOy)&&<div style={{background:C.warn+"11",border:`1px solid ${C.warn}44`,borderRadius:8,padding:"10px 16px",marginBottom:16,display:"flex",gap:8,alignItems:"center"}}><span>⚠️</span><span style={{color:C.warn,fontWeight:600,fontSize:13}}>Ganó un premio hace {daysSince(selOy.ultimoWin)} días.</span></div>}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-              {[["\uD83D\uDCF1 Tel\u00e9fono",selOy.telefono],["\uD83E\uDEB6 DNI",selOy.dni],["\u2709\ufe0f Email",selOy.email||"\u2014"],["\uD83C\uDF82 Edad",selOy.edad?selOy.edad+" a\u00f1os":"\u2014"],["\uD83D\uDCCD Localidad",selOy.localidad||"\u2014"],["\uD83D\uDC64 G\u00e9nero",selOy.genero||"\u2014"]].map(([l,val])=>(
+              {[["📱 Teléfono",selOy.telefono],["🪶 DNI",selOy.dni],["✉️ Email",selOy.email||"—"],["🎂 Edad",selOy.edad?selOy.edad+" años":"—"],["📍 Localidad",selOy.localidad||"—"],["👤 Género",selOy.genero||"—"]].map(([l,val])=>(
                 <div key={l} className="card" style={{padding:"12px 14px"}}><div style={{color:C.muted,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>{l}</div><div style={{fontSize:15,fontWeight:600}}>{val}</div></div>
               ))}
             </div>
-            {selOy.nota&&<div className="card" style={{padding:"12px 14px",marginBottom:14,borderLeft:`3px solid ${C.warn}`}}><div style={{color:C.muted,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>\uD83D\uDCDD Nota</div><div style={{fontSize:14,color:C.text,lineHeight:1.6}}>{selOy.nota}</div></div>}
+            {selOy.nota&&<div className="card" style={{padding:"12px 14px",marginBottom:14,borderLeft:`3px solid ${C.warn}`}}><div style={{color:C.muted,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>📝 Nota</div><div style={{fontSize:14,color:C.text,lineHeight:1.6}}>{selOy.nota}</div></div>}
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:20}}>
-              {[["Participaciones",selOy.veces||0,C.accent],["Premios ganados",selOy.totalWins||0,C.green],["D\u00edas \u00falt. premio",daysSince(selOy.ultimoWin)!==null?daysSince(selOy.ultimoWin)+"d":"Nunca",C.warn]].map(([l,val,col])=>(
+              {[["Participaciones",selOy.veces||0,C.accent],["Premios ganados",selOy.totalWins||0,C.green],["Días últ. premio",daysSince(selOy.ultimoWin)!==null?daysSince(selOy.ultimoWin)+"d":"Nunca",C.warn]].map(([l,val,col])=>(
                 <div key={l} className="card" style={{padding:16,textAlign:"center"}}><div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:34,fontWeight:800,color:col}}>{val}</div><div style={{color:C.muted,fontSize:11,marginTop:4,fontWeight:600,textTransform:"uppercase",letterSpacing:.5}}>{l}</div></div>
               ))}
             </div>
             <div className="card" style={{padding:18,marginBottom:14}}>
               <h3 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:15,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:14}}>Historial de concursos</h3>
-              {participaciones.filter(p=>p.oyenteId===selOy.id).length===0&&<p style={{color:C.muted,fontSize:13}}>No particip\u00f3 en concursos a\u00fan.</p>}
+              {participaciones.filter(p=>p.oyenteId===selOy.id).length===0&&<p style={{color:C.muted,fontSize:13}}>No participó en concursos aún.</p>}
               {participaciones.filter(p=>p.oyenteId===selOy.id).map(p=>{
                 const con=concursos.find(c=>c.id===p.concursoId);
                 const nombre=con?.nombre||p.concursoNombre||"Concurso eliminado";
                 const premio=con?.premio||p.concursoPremio||"";
                 const diasAtras=p.fecha?daysSince(p.fecha):null;
-                const cuandoStr=diasAtras===0?"hoy":diasAtras===1?"ayer":diasAtras!==null?"hace "+diasAtras+" d\u00edas":"";
+                const cuandoStr=diasAtras===0?"hoy":diasAtras===1?"ayer":diasAtras!==null?"hace "+diasAtras+" días":"";
                 const esGan=p.esGanador==="si"||(con?.ganadorId===selOy.id)||(con?.tipo==="ganador_directo");
                 return(<div key={p.concursoId+p.oyenteId} style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",padding:"10px 0",borderBottom:`1px solid ${C.border}`}}>
                   <div>
                     <div style={{fontWeight:600,fontSize:13,display:"flex",alignItems:"center",gap:6}}>{nombre}{!con&&<span style={{fontSize:10,color:C.muted,fontWeight:400,background:C.border,borderRadius:4,padding:"1px 6px"}}>eliminado</span>}</div>
-                    {premio&&<div style={{color:C.muted,fontSize:11,marginTop:1}}>\uD83C\uDF81 {premio}{p.cantGanada&&parseInt(p.cantGanada)>1?" \u00b7 "+p.cantGanada+" unidades":""}</div>}
-                    {cuandoStr&&<div style={{color:C.muted,fontSize:11,marginTop:1}}>\uD83D\uDDD3 {cuandoStr} \u00b7 {p.fecha}</div>}
-                    {p.operadorNombre&&isAdmin&&<div style={{color:C.muted,fontSize:10,marginTop:1}}>\uD83D\uDC64 {p.operadorNombre}</div>}
+                    {premio&&<div style={{color:C.muted,fontSize:11,marginTop:1}}>🎁 {premio}{p.cantGanada&&parseInt(p.cantGanada)>1?" · "+p.cantGanada+" unidades":""}</div>}
+                    {cuandoStr&&<div style={{color:C.muted,fontSize:11,marginTop:1}}>🗓 {cuandoStr} · {p.fecha}</div>}
+                    {p.operadorNombre&&isAdmin&&<div style={{color:C.muted,fontSize:10,marginTop:1}}>👤 {p.operadorNombre}</div>}
                   </div>
                   <div style={{flexShrink:0,marginLeft:8}}>
-                    {esGan?<span className="tag-ok">\uD83C\uDFC6 Ganador</span>:con?.estado==="activo"?<span className="tag-active">En curso</span>:!con?<span className="tag-done">Finalizado</span>:<span className="tag-done">No gan\u00f3</span>}
+                    {esGan?<span className="tag-ok">🏆 Ganador</span>:con?.estado==="activo"?<span className="tag-active">En curso</span>:!con?<span className="tag-done">Finalizado</span>:<span className="tag-done">No ganó</span>}
                   </div>
                 </div>);
               })}
@@ -879,8 +879,8 @@ function MainApp({onLogout,currentUser}){
                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
                   {consActivos.filter(c=>!inCon(selOy.id,c.id)).map(c=>(
                     <div key={c.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",borderRadius:8,border:`1px solid ${C.border}`,background:C.bg,gap:10,flexWrap:"wrap"}}>
-                      <div><div style={{fontWeight:600,fontSize:13}}>{c.nombre}</div><div style={{fontSize:11,color:C.muted}}>\uD83C\uDF81 {c.premio} \u00b7 {c.tipo==="sorteo"?"\uD83C\uDFB2":"\uD83C\uDFC6"}</div></div>
-                      <button className={c.tipo==="ganador_directo"?"btn-green":"btn-ghost"} style={{padding:"6px 14px",fontSize:12,flexShrink:0}} onClick={()=>inscribir(selOy.id,c.id)}>{c.tipo==="ganador_directo"?"\uD83C\uDFC6 Marcar ganador":"+ Inscribir"}</button>
+                      <div><div style={{fontWeight:600,fontSize:13}}>{c.nombre}</div><div style={{fontSize:11,color:C.muted}}>🎁 {c.premio} · {c.tipo==="sorteo"?"🎲":"🏆"}</div></div>
+                      <button className={c.tipo==="ganador_directo"?"btn-green":"btn-ghost"} style={{padding:"6px 14px",fontSize:12,flexShrink:0}} onClick={()=>inscribir(selOy.id,c.id)}>{c.tipo==="ganador_directo"?"🏆 Marcar ganador":"+ Inscribir"}</button>
                     </div>
                   ))}
                 </div>
@@ -896,14 +896,14 @@ function MainApp({onLogout,currentUser}){
             <Title t="Registrar Oyente"/>
             <FErr/>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-              {[["nombre","Nombre completo *","text","Luc\u00eda Fern\u00e1ndez"],["telefono","Tel\u00e9fono / WhatsApp *","tel","1134567890"],["dni","DNI *","text","32456789"],["email","Email","email","lucia@gmail.com"],["edad","Edad","number","28"],["localidad","Localidad","text","Palermo, CABA"]].map(([k,l,t,ph])=>(
+              {[["nombre","Nombre completo *","text","Lucía Fernández"],["telefono","Teléfono / WhatsApp *","tel","1134567890"],["dni","DNI *","text","32456789"],["email","Email","email","lucia@gmail.com"],["edad","Edad","number","28"],["localidad","Localidad","text","Palermo, CABA"]].map(([k,l,t,ph])=>(
                 <div key={k} style={{gridColumn:k==="nombre"?"1 / span 2":"auto"}}>
                   <Lbl>{l}</Lbl>
                   <input className="inp" type={t} placeholder={ph} value={oyForm[k]} onChange={e=>{setOyForm(p=>({...p,[k]:e.target.value}));setFormErr("");}}/>
                 </div>
               ))}
               <div>
-                <Lbl>G\u00e9nero</Lbl>
+                <Lbl>Género</Lbl>
                 <select className="sel" value={oyForm.genero} onChange={e=>{setOyForm(p=>({...p,genero:e.target.value}));setFormErr("");}}>
                   <option value="">Seleccionar...</option><option>Mujer</option><option>Hombre</option><option>Otro</option>
                 </select>
@@ -921,13 +921,13 @@ function MainApp({onLogout,currentUser}){
                     const selected=oyConIds.includes(c.id);
                     return(
                       <div key={c.id} onClick={()=>setOyConIds(p=>selected?p.filter(id=>id!==c.id):[...p,c.id])} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:8,border:`2px solid ${selected?C.accent:C.border}`,background:selected?C.accent+"11":C.card,cursor:"pointer",transition:"all .15s"}}>
-                        <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${selected?C.accent:C.border}`,background:selected?C.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{selected&&<span style={{color:"#fff",fontSize:12}}>\u2713</span>}</div>
-                        <div style={{flex:1}}><div style={{fontWeight:600,fontSize:13,color:selected?C.accent:C.text}}>{c.nombre}</div><div style={{fontSize:11,color:C.muted}}>\uD83C\uDF81 {c.premio} \u00b7 {c.tipo==="sorteo"?"\uD83C\uDFB2 Sorteo":"\uD83C\uDFC6 Ganador directo"}</div></div>
+                        <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${selected?C.accent:C.border}`,background:selected?C.accent:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{selected&&<span style={{color:"#fff",fontSize:12}}>✓</span>}</div>
+                        <div style={{flex:1}}><div style={{fontWeight:600,fontSize:13,color:selected?C.accent:C.text}}>{c.nombre}</div><div style={{fontSize:11,color:C.muted}}>🎁 {c.premio} · {c.tipo==="sorteo"?"🎲 Sorteo":"🏆 Ganador directo"}</div></div>
                       </div>
                     );
                   })}
                 </div>
-                {oyConIds.length>0&&<p style={{color:C.green,fontSize:12,marginTop:8,fontWeight:600}}>\uD83C\uDFC6 Se registrar\u00e1 como ganador en {oyConIds.length} concurso{oyConIds.length>1?"s":""}</p>}
+                {oyConIds.length>0&&<p style={{color:C.green,fontSize:12,marginTop:8,fontWeight:600}}>🏆 Se registrará como ganador en {oyConIds.length} concurso{oyConIds.length>1?"s":""}</p>}
               </div>
             )}
             <button className="btn" onClick={addOyente} disabled={saving} style={{width:"100%",padding:13,marginTop:20}}>{saving?"Guardando...":"Registrar oyente"}</button>
@@ -937,18 +937,18 @@ function MainApp({onLogout,currentUser}){
         {/* ── EDITAR OYENTE ── */}
         {view===V.OY_EDIT&&selOy&&(
           <div className="fade-in" style={{maxWidth:520}}>
-            <Back to={V.OY_DET} label="\u2190 Volver al perfil"/>
+            <Back to={V.OY_DET} label="← Volver al perfil"/>
             <Title t="Editar Oyente" sub={selOy.nombre}/>
             <FErr/>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-              {[["nombre","Nombre completo *","text"],["telefono","Tel\u00e9fono / WhatsApp *","tel"],["dni","DNI *","text"],["email","Email","email"],["edad","Edad","number"],["localidad","Localidad","text"]].map(([k,l,t])=>(
+              {[["nombre","Nombre completo *","text"],["telefono","Teléfono / WhatsApp *","tel"],["dni","DNI *","text"],["email","Email","email"],["edad","Edad","number"],["localidad","Localidad","text"]].map(([k,l,t])=>(
                 <div key={k} style={{gridColumn:k==="nombre"?"1 / span 2":"auto"}}>
                   <Lbl>{l}</Lbl>
                   <input className="inp" type={t} value={editForm[k]} onChange={e=>{setEditForm(p=>({...p,[k]:e.target.value}));setFormErr("");}}/>
                 </div>
               ))}
               <div>
-                <Lbl>G\u00e9nero</Lbl>
+                <Lbl>Género</Lbl>
                 <select className="sel" value={editForm.genero} onChange={e=>{setEditForm(p=>({...p,genero:e.target.value}));setFormErr("");}}>
                   <option value="">Seleccionar...</option><option>Mujer</option><option>Hombre</option><option>Otro</option>
                 </select>
@@ -962,12 +962,12 @@ function MainApp({onLogout,currentUser}){
               <div style={{marginTop:20}}>
                 <Lbl>Agregar a concurso activo (opcional)</Lbl>
                 <select className="sel" value={editConId} onChange={e=>setEditConId(e.target.value)}>
-                  <option value="">\u2014 No agregar \u2014</option>
+                  <option value="">— No agregar —</option>
                   {consActivos.filter(c=>!inCon(selOy.id,c.id)).map(c=>(
-                    <option key={c.id} value={c.id}>{c.tipo==="ganador_directo"?"\uD83C\uDFC6":"\uD83C\uDFB2"} {c.nombre} \u2014 {c.premio}</option>
+                    <option key={c.id} value={c.id}>{c.tipo==="ganador_directo"?"🏆":"🎲"} {c.nombre} — {c.premio}</option>
                   ))}
                 </select>
-                {editConId&&(()=>{const con=concursos.find(c=>c.id===editConId);return con?(<p style={{color:con.tipo==="ganador_directo"?C.green:C.accent,fontSize:12,marginTop:6,fontWeight:600}}>{con.tipo==="ganador_directo"?"\uD83C\uDFC6 Se marcar\u00e1 como ganador en":"\uD83C\uDFB2 Se inscribir\u00e1 en"} {con.nombre}</p>):null;})()}
+                {editConId&&(()=>{const con=concursos.find(c=>c.id===editConId);return con?(<p style={{color:con.tipo==="ganador_directo"?C.green:C.accent,fontSize:12,marginTop:6,fontWeight:600}}>{con.tipo==="ganador_directo"?"🏆 Se marcará como ganador en":"🎲 Se inscribirá en"} {con.nombre}</p>):null;})()}
               </div>
             )}
             <button className="btn" onClick={updateOyente} disabled={saving} style={{width:"100%",padding:13,marginTop:20}}>{saving?"Guardando...":"Guardar cambios"}</button>
@@ -996,13 +996,13 @@ function MainApp({onLogout,currentUser}){
                         {c.estado==="activo"&&<span className="tag-active">Activo</span>}
                         {c.estado==="finalizado"&&<span className="tag-done">Finalizado</span>}
                         {c.estado==="archivado"&&<span className="tag-arch">Archivado</span>}
-                        <span style={{background:C.bg,color:C.muted,border:`1px solid ${C.border}`,borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:600}}>{c.tipo==="sorteo"?"\uD83C\uDFB2 Sorteo":"\uD83C\uDFC6 Ganador directo"}</span>
+                        <span style={{background:C.bg,color:C.muted,border:`1px solid ${C.border}`,borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:600}}>{c.tipo==="sorteo"?"🎲 Sorteo":"🏆 Ganador directo"}</span>
                         {c.fechaHasta&&<Countdown fechaHasta={c.fechaHasta}/>}
                       </div>
-                      <div style={{color:C.muted,fontSize:12}}>\uD83C\uDF81 {c.premio} \u00b7 {pCount} participantes{c.fechaDesde?" \u00b7 "+fmtDate(c.fechaDesde)+(c.fechaHasta?" \u2192 "+fmtDate(c.fechaHasta):""):""}</div>
-                      {c.ganadorNombre&&<div style={{color:C.green,fontSize:12,fontWeight:600,marginTop:3}}>\uD83C\uDFC6 {c.ganadorNombre}</div>}
+                      <div style={{color:C.muted,fontSize:12}}>🎁 {c.premio} · {pCount} participantes{c.fechaDesde?" · "+fmtDate(c.fechaDesde)+(c.fechaHasta?" → "+fmtDate(c.fechaHasta):""):""}</div>
+                      {c.ganadorNombre&&<div style={{color:C.green,fontSize:12,fontWeight:600,marginTop:3}}>🏆 {c.ganadorNombre}</div>}
                     </div>
-                    <span style={{color:C.muted,fontSize:20}}>\u203a</span>
+                    <span style={{color:C.muted,fontSize:20}}>›</span>
                   </div>
                 );
               })}
@@ -1021,47 +1021,47 @@ function MainApp({onLogout,currentUser}){
                   {selCon.estado==="activo"&&<span className="tag-active">Activo</span>}
                   {selCon.estado==="finalizado"&&<span className="tag-done">Finalizado</span>}
                   {selCon.estado==="archivado"&&<span className="tag-arch">Archivado</span>}
-                  <span style={{background:C.bg,color:C.muted,border:`1px solid ${C.border}`,borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:600}}>{selCon.tipo==="sorteo"?"\uD83C\uDFB2 Sorteo":"\uD83C\uDFC6 Ganador directo"}</span>
+                  <span style={{background:C.bg,color:C.muted,border:`1px solid ${C.border}`,borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:600}}>{selCon.tipo==="sorteo"?"🎲 Sorteo":"🏆 Ganador directo"}</span>
                   {selCon.fechaHasta&&<Countdown fechaHasta={selCon.fechaHasta}/>}
                 </div>
-                <p style={{color:C.muted,fontSize:13}}>\uD83C\uDF81 {selCon.premio}{selCon.fechaDesde?" \u00b7 "+fmtDate(selCon.fechaDesde):""}{selCon.fechaHasta?" \u2192 "+fmtDate(selCon.fechaHasta):""}</p>
+                <p style={{color:C.muted,fontSize:13}}>🎁 {selCon.premio}{selCon.fechaDesde?" · "+fmtDate(selCon.fechaDesde):""}{selCon.fechaHasta?" → "+fmtDate(selCon.fechaHasta):""}</p>
               </div>
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                {selCon.estado==="activo"&&conPartic(selCon.id).length>0&&selCon.tipo==="sorteo"&&<button className="btn-green" onClick={()=>nav(V.SORTEO,selCon.id)}>\uD83C\uDFB2 Sortear</button>}
-                <button className="btn-ghost" style={{fontSize:12}} onClick={()=>exportExcelConcurso(selCon.id)}>\u2b07 Reporte</button>
+                {selCon.estado==="activo"&&conPartic(selCon.id).length>0&&selCon.tipo==="sorteo"&&<button className="btn-green" onClick={()=>nav(V.SORTEO,selCon.id)}>🎲 Sortear</button>}
+                <button className="btn-ghost" style={{fontSize:12}} onClick={()=>exportExcelConcurso(selCon.id)}>⬇ Reporte</button>
                 {selCon.estado==="activo"&&<button className="btn-ghost" style={{fontSize:12}} onClick={()=>{setExtendiendo(e=>!e);setNuevaFecha(selCon.fechaHasta||"");}}>&#x1F4C5; Extender</button>}
                 {selCon.estado==="activo"&&<button className="btn-ghost" style={{fontSize:12}} onClick={()=>{setEditConForm({nombre:selCon.nombre||"",premio:selCon.premio||"",descripcion:selCon.descripcion||"",fechaDesde:selCon.fechaDesde||"",fechaHasta:selCon.fechaHasta||"",tipo:selCon.tipo||"ganador_directo",stockTotal:selCon.stockTotal||""});setFormErr("");nav(V.CON_EDIT,selCon.id);}}>&#x270F;&#xFE0F; Editar</button>}
-                {selCon.estado==="finalizado"&&<button className="btn-ghost" style={{fontSize:12,color:C.green,borderColor:C.green}} onClick={()=>reactivarConcurso(selCon.id)}>\u25ba Reactivar</button>}
+                {selCon.estado==="finalizado"&&<button className="btn-ghost" style={{fontSize:12,color:C.green,borderColor:C.green}} onClick={()=>reactivarConcurso(selCon.id)}>► Reactivar</button>}
                 {selCon.estado!=="archivado"&&isAdmin&&<button className="btn-ghost" style={{fontSize:12}} onClick={e=>{e.stopPropagation();setConfirm({type:"archivar",id:selCon.id});}}>&#x1F4E6; Archivar</button>}
-                {isAdmin&&<button className="btn-red" style={{fontSize:12,padding:"9px 14px"}} onClick={e=>{e.stopPropagation();setConfirm({type:"eliminar",id:selCon.id});}}>\uD83D\uDDD1</button>}
+                {isAdmin&&<button className="btn-red" style={{fontSize:12,padding:"9px 14px"}} onClick={e=>{e.stopPropagation();setConfirm({type:"eliminar",id:selCon.id});}}>🗑</button>}
               </div>
             </div>
 
-            {selCon.ganadorNombre&&<div style={{background:C.green+"11",border:`1px solid ${C.green}44`,borderRadius:10,padding:"14px 18px",marginBottom:16,display:"flex",alignItems:"center",gap:12}}><span style={{fontSize:28}}>\uD83C\uDFC6</span><div><div style={{color:C.green,fontWeight:700,fontSize:18,fontFamily:"'Barlow Condensed',sans-serif",textTransform:"uppercase",letterSpacing:1}}>{selCon.tipo==="ganador_directo"?"\u00daltimo ganador:":"Ganador:"} {selCon.ganadorNombre}</div><div style={{color:C.muted,fontSize:12}}>Premio: {selCon.premio}</div></div></div>}
+            {selCon.ganadorNombre&&<div style={{background:C.green+"11",border:`1px solid ${C.green}44`,borderRadius:10,padding:"14px 18px",marginBottom:16,display:"flex",alignItems:"center",gap:12}}><span style={{fontSize:28}}>🏆</span><div><div style={{color:C.green,fontWeight:700,fontSize:18,fontFamily:"'Barlow Condensed',sans-serif",textTransform:"uppercase",letterSpacing:1}}>{selCon.tipo==="ganador_directo"?"Último ganador:":"Ganador:"} {selCon.ganadorNombre}</div><div style={{color:C.muted,fontSize:12}}>Premio: {selCon.premio}</div></div></div>}
 
-            {waMsg&&<div className="card fade-in" style={{padding:"14px 18px",marginBottom:16,border:`2px solid ${C.green}`}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}><span style={{fontWeight:700,fontSize:13,color:C.green}}>\uD83D\uDCF1 Mensaje para WhatsApp</span><button className="btn-ghost" style={{padding:"3px 10px",fontSize:11}} onClick={()=>setWaMsg(null)}>\u2715</button></div><div style={{background:C.bg,borderRadius:6,padding:"10px 12px",fontSize:13,color:C.text,lineHeight:1.6,marginBottom:10}}>{waMsg}</div><button className="btn-green" style={{padding:"6px 16px",fontSize:12}} onClick={()=>{navigator.clipboard.writeText(waMsg);showToast("Copiado al portapapeles \u2713");}}>&#x1F4CB; Copiar mensaje</button></div>}
+            {waMsg&&<div className="card fade-in" style={{padding:"14px 18px",marginBottom:16,border:`2px solid ${C.green}`}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}><span style={{fontWeight:700,fontSize:13,color:C.green}}>📱 Mensaje para WhatsApp</span><button className="btn-ghost" style={{padding:"3px 10px",fontSize:11}} onClick={()=>setWaMsg(null)}>✕</button></div><div style={{background:C.bg,borderRadius:6,padding:"10px 12px",fontSize:13,color:C.text,lineHeight:1.6,marginBottom:10}}>{waMsg}</div><button className="btn-green" style={{padding:"6px 16px",fontSize:12}} onClick={()=>{navigator.clipboard.writeText(waMsg);showToast("Copiado al portapapeles ✓");}}>&#x1F4CB; Copiar mensaje</button></div>}
 
-            {extendiendo&&<div className="card fade-in" style={{padding:"14px 18px",marginBottom:16,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}><span style={{fontWeight:600,fontSize:13}}>\uD83D\uDCC5 Nueva fecha l\u00edmite:</span><input className="inp" type="date" value={nuevaFecha} onChange={e=>setNuevaFecha(e.target.value)} style={{width:"auto",flex:1,minWidth:160}}/><button className="btn" style={{padding:"8px 18px",fontSize:13}} onClick={()=>extenderConcurso(selCon.id,nuevaFecha)}>Confirmar</button><button className="btn-ghost" style={{padding:"8px 14px",fontSize:13}} onClick={()=>setExtendiendo(false)}>Cancelar</button></div>}
+            {extendiendo&&<div className="card fade-in" style={{padding:"14px 18px",marginBottom:16,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}><span style={{fontWeight:600,fontSize:13}}>📅 Nueva fecha límite:</span><input className="inp" type="date" value={nuevaFecha} onChange={e=>setNuevaFecha(e.target.value)} style={{width:"auto",flex:1,minWidth:160}}/><button className="btn" style={{padding:"8px 18px",fontSize:13}} onClick={()=>extenderConcurso(selCon.id,nuevaFecha)}>Confirmar</button><button className="btn-ghost" style={{padding:"8px 14px",fontSize:13}} onClick={()=>setExtendiendo(false)}>Cancelar</button></div>}
 
             {selCon.tipo==="ganador_directo"&&parseInt(selCon.stockTotal)>0&&(()=>{
               const total=parseInt(selCon.stockTotal)||0,usados=parseInt(selCon.stockUsado)||0,restantes=total-usados,pct=Math.min(Math.round((usados/total)*100),100),agotado=restantes<=0;
               return(<div className="card" style={{padding:"14px 18px",marginBottom:16}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,flexWrap:"wrap",gap:8}}>
-                  <div><span style={{fontWeight:700,fontSize:13,color:agotado?C.red:C.text}}>\uD83C\uDF81 Stock: </span><span style={{fontWeight:800,fontSize:15,color:agotado?C.red:C.green}}>{restantes}</span><span style={{color:C.muted,fontSize:12}}> de {total} \u00b7 {usados} entregados</span></div>
-                  {agotado&&selCon.estado==="activo"&&<button className="btn-ghost" style={{fontSize:12,padding:"4px 12px"}} onClick={()=>{const extra=prompt("\u00bfCu\u00e1ntos premios m\u00e1s?","10");if(extra&&parseInt(extra)>0){const nT=total+parseInt(extra);api("extenderStock",{concursoId:selCon.id,stockTotal:nT,operadorId:opId,operadorNombre:opNombre});setConcursos(p=>p.map(c=>c.id===selCon.id?{...c,stockTotal:nT}:c));showToast("Stock ampliado a "+nT+" \u2713");}}}>\u2795 Agregar m\u00e1s</button>}
+                  <div><span style={{fontWeight:700,fontSize:13,color:agotado?C.red:C.text}}>🎁 Stock: </span><span style={{fontWeight:800,fontSize:15,color:agotado?C.red:C.green}}>{restantes}</span><span style={{color:C.muted,fontSize:12}}> de {total} · {usados} entregados</span></div>
+                  {agotado&&selCon.estado==="activo"&&<button className="btn-ghost" style={{fontSize:12,padding:"4px 12px"}} onClick={()=>{const extra=prompt("¿Cuántos premios más?","10");if(extra&&parseInt(extra)>0){const nT=total+parseInt(extra);api("extenderStock",{concursoId:selCon.id,stockTotal:nT,operadorId:opId,operadorNombre:opNombre});setConcursos(p=>p.map(c=>c.id===selCon.id?{...c,stockTotal:nT}:c));showToast("Stock ampliado a "+nT+" ✓");}}}>➕ Agregar más</button>}
                 </div>
                 <div style={{height:8,background:C.border,borderRadius:4,overflow:"hidden"}}><div style={{height:"100%",width:pct+"%",background:agotado?C.red:restantes<=total*.2?C.warn:C.green,borderRadius:4,transition:"width .5s"}}/></div>
-                {agotado&&<p style={{color:C.red,fontSize:12,fontWeight:600,marginTop:6}}>\u26a0\ufe0f Stock agotado.</p>}
-                {!agotado&&restantes<=total*.2&&<p style={{color:C.warn,fontSize:12,fontWeight:600,marginTop:6}}>\u26a0\ufe0f Quedan pocos premios ({restantes}).</p>}
+                {agotado&&<p style={{color:C.red,fontSize:12,fontWeight:600,marginTop:6}}>⚠️ Stock agotado.</p>}
+                {!agotado&&restantes<=total*.2&&<p style={{color:C.warn,fontSize:12,fontWeight:600,marginTop:6}}>⚠️ Quedan pocos premios ({restantes}).</p>}
               </div>);
             })()}
 
             {pickingWinner&&<div className="card fade-in" style={{padding:"16px 18px",marginBottom:16,border:`2px solid ${C.green}`}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
-                <div><span style={{fontWeight:700,fontSize:14}}>\uD83C\uDFC6 Dar premio a </span><span style={{fontWeight:800,fontSize:15,color:C.green}}>{pickingWinner.nombre}</span></div>
+                <div><span style={{fontWeight:700,fontSize:14}}>🏆 Dar premio a </span><span style={{fontWeight:800,fontSize:15,color:C.green}}>{pickingWinner.nombre}</span></div>
                 <button className="btn-ghost" style={{padding:"4px 10px",fontSize:12}} onClick={()=>{setPickingWinner(null);setCantGanada(1);}}>&#x2715; Cancelar</button>
               </div>
-              <Lbl>\u00bfCu\u00e1ntos premios le das?</Lbl>
+              <Lbl>¿Cuántos premios le das?</Lbl>
               {(()=>{
                 const total=parseInt(selCon.stockTotal)||0,usados=parseInt(selCon.stockUsado)||0,restantes=total>0?total-usados:20;
                 const opciones=Array.from({length:Math.min(restantes,20)},(_,i)=>i+1);
@@ -1077,19 +1077,19 @@ function MainApp({onLogout,currentUser}){
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
               <div className="card" style={{padding:18}}>
                 <h3 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:15,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:14}}>Participantes ({conPartic(selCon.id).length})</h3>
-                {conPartic(selCon.id).length===0&&<p style={{color:C.muted,fontSize:13}}>Sin participantes a\u00fan.</p>}
+                {conPartic(selCon.id).length===0&&<p style={{color:C.muted,fontSize:13}}>Sin participantes aún.</p>}
                 {conPartic(selCon.id).map(o=>{
                   const par=participaciones.find(p=>p.concursoId===selCon.id&&p.oyenteId===o.id);
                   const esGan=par?.esGanador==="si"||(selCon.ganadorId===o.id)||(selCon.tipo==="ganador_directo");
                   return(<div key={o.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:`1px solid ${C.border}`}}>
                     <div>
                       <div style={{fontWeight:600,fontSize:13}}>{o.nombre}</div>
-                      <div style={{color:C.muted,fontSize:11}}>{o.telefono}{par?.cantGanada&&parseInt(par.cantGanada)>1?" \u00b7 "+par.cantGanada+"x":""}
-                      {par?.operadorNombre&&isAdmin?<span style={{color:C.muted,fontSize:10}}> \u00b7 {par.operadorNombre}</span>:""}</div>
+                      <div style={{color:C.muted,fontSize:11}}>{o.telefono}{par?.cantGanada&&parseInt(par.cantGanada)>1?" · "+par.cantGanada+"x":""}
+                      {par?.operadorNombre&&isAdmin?<span style={{color:C.muted,fontSize:10}}> · {par.operadorNombre}</span>:""}</div>
                     </div>
                     <div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap",justifyContent:"flex-end"}}>
-                      {esGan&&<span className="tag-ok">\uD83C\uDFC6</span>}
-                      {isRecent(o)&&!esGan&&<span className="tag-warn">\u26a0{daysSince(o.ultimoWin)}d</span>}
+                      {esGan&&<span className="tag-ok">🏆</span>}
+                      {isRecent(o)&&!esGan&&<span className="tag-warn">⚠{daysSince(o.ultimoWin)}d</span>}
                       {selCon.estado==="activo"&&selCon.tipo==="ganador_directo"&&(pickingWinner?.id===o.id?null:<button className="btn-green btn-sm" onClick={()=>{setPickingWinner(o);setCantGanada(1);}}>&#x1F3C6; Premio</button>)}
                     </div>
                   </div>);
@@ -1099,12 +1099,12 @@ function MainApp({onLogout,currentUser}){
               <div style={{display:"flex",flexDirection:"column",gap:14}}>
                 {selCon.estado==="activo"&&<div className="card" style={{padding:18}}>
                   <h3 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:15,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Inscribir oyente</h3>
-                  <input className="inp" placeholder="Buscar por nombre o tel\u00e9fono..." value={conBusq} onChange={e=>setConBusq(e.target.value)} style={{marginBottom:10,padding:"8px 12px",fontSize:13}}/>
+                  <input className="inp" placeholder="Buscar por nombre o teléfono..." value={conBusq} onChange={e=>setConBusq(e.target.value)} style={{marginBottom:10,padding:"8px 12px",fontSize:13}}/>
                   <div style={{maxHeight:220,overflowY:"auto"}}>
                     {oyentes.filter(o=>!inCon(o.id,selCon.id)).filter(o=>!conBusq||o.nombre.toLowerCase().includes(conBusq.toLowerCase())||o.telefono.includes(conBusq)).map(o=>(
                       <div key={o.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:`1px solid ${C.border}`}}>
-                        <div><div style={{fontWeight:600,fontSize:13}}>{o.nombre}</div><div style={{color:isRecent(o)?C.warn:C.muted,fontSize:11}}>{o.telefono}{isRecent(o)?" \u00b7 \u26a0 "+daysSince(o.ultimoWin)+"d":""}</div></div>
-                        <button className="btn-ghost" onClick={()=>inscribir(o.id,selCon.id)} style={{padding:"4px 12px",fontSize:12,flexShrink:0}}>{selCon.tipo==="ganador_directo"?"\uD83C\uDFC6":"+"}</button>
+                        <div><div style={{fontWeight:600,fontSize:13}}>{o.nombre}</div><div style={{color:isRecent(o)?C.warn:C.muted,fontSize:11}}>{o.telefono}{isRecent(o)?" · ⚠ "+daysSince(o.ultimoWin)+"d":""}</div></div>
+                        <button className="btn-ghost" onClick={()=>inscribir(o.id,selCon.id)} style={{padding:"4px 12px",fontSize:12,flexShrink:0}}>{selCon.tipo==="ganador_directo"?"🏆":"+"}</button>
                       </div>
                     ))}
                     {oyentes.filter(o=>!inCon(o.id,selCon.id)).length===0&&<p style={{color:C.muted,fontSize:13}}>Todos inscriptos.</p>}
@@ -1114,8 +1114,8 @@ function MainApp({onLogout,currentUser}){
                 {conPartic(selCon.id).length>0&&(()=>{
                   const cs=conStats(selCon.id);
                   return(<div className="card" style={{padding:18}}>
-                    <h3 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:15,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:14}}>Perfil del p\u00fablico</h3>
-                    <div style={{marginBottom:12}}><div style={{fontSize:11,color:C.muted,fontWeight:700,textTransform:"uppercase",marginBottom:6}}>G\u00e9nero</div>
+                    <h3 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:15,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:14}}>Perfil del público</h3>
+                    <div style={{marginBottom:12}}><div style={{fontSize:11,color:C.muted,fontWeight:700,textTransform:"uppercase",marginBottom:6}}>Género</div>
                       {Object.entries(cs.gen).filter(([,v])=>v>0).map(([g,n])=>{const col=g==="Mujer"?"#EC4899":g==="Hombre"?"#3B82F6":g==="Otro"?"#8B5CF6":C.muted;return(<div key={g} style={{marginBottom:6}}><div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:2}}><span style={{color:C.muted}}>{g}</span><span style={{fontWeight:700}}>{n}</span></div><Bar val={n} max={cs.total} color={col}/></div>);})}
                     </div>
                     <div style={{marginBottom:12}}><div style={{fontSize:11,color:C.muted,fontWeight:700,textTransform:"uppercase",marginBottom:6}}>Edad</div>
@@ -1132,33 +1132,33 @@ function MainApp({onLogout,currentUser}){
         {/* ── SORTEO ── */}
         {view===V.SORTEO&&selCon&&(
           <div className="fade-in" style={{textAlign:"center",paddingTop:20}}>
-            <Back to={V.CON_DET} label="\u2190 Volver al concurso"/>
-            <div style={{fontSize:36,marginBottom:8}}>\uD83C\uDFB2</div>
+            <Back to={V.CON_DET} label="← Volver al concurso"/>
+            <div style={{fontSize:36,marginBottom:8}}>🎲</div>
             <h2 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:32,fontWeight:800,textTransform:"uppercase",letterSpacing:2,marginBottom:4}}>SORTEO EN VIVO</h2>
             <p style={{color:C.muted,fontSize:14,marginBottom:6}}>{selCon.nombre}</p>
-            <p style={{color:C.accent,fontWeight:700,fontSize:16,marginBottom:24}}>\uD83C\uDF81 {selCon.premio}</p>
+            <p style={{color:C.accent,fontWeight:700,fontSize:16,marginBottom:24}}>🎁 {selCon.premio}</p>
             {!sorteoState.ganadores.length&&!sorteoState.animando&&(
               <div className="card" style={{display:"inline-block",padding:"32px 48px",marginBottom:28,textAlign:"center"}}>
                 <p style={{color:C.muted,fontSize:14,marginBottom:16}}>{conPartic(selCon.id).length} participantes en el bombo</p>
                 <div style={{marginBottom:20}}>
-                  <Lbl>\u00bfCu\u00e1ntos ganadores?</Lbl>
+                  <Lbl>¿Cuántos ganadores?</Lbl>
                   <select className="sel" value={cantSortear} onChange={e=>setCantSortear(parseInt(e.target.value))} style={{width:"auto",minWidth:120,margin:"0 auto"}}>
                     {Array.from({length:Math.min(conPartic(selCon.id).length,10)},(_,i)=>i+1).map(n=><option key={n} value={n}>{n} ganador{n>1?"es":""}</option>)}
                   </select>
                 </div>
-                <button className="btn" onClick={realizarSorteo} style={{padding:"16px 48px",fontSize:20}}>\u00a1SORTEAR AHORA!</button>
+                <button className="btn" onClick={realizarSorteo} style={{padding:"16px 48px",fontSize:20}}>¡SORTEAR AHORA!</button>
               </div>
             )}
             {sorteoState.animando&&<div className="card pulse" style={{display:"inline-block",padding:"32px 48px",marginBottom:28,minWidth:300}}><div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:36,fontWeight:800,color:C.accent,letterSpacing:1}}>{sorteoState.nombres[Math.floor(Math.random()*sorteoState.nombres.length)]||"..."}</div></div>}
             {sorteoState.ganadores.length>0&&!sorteoState.animando&&(
               <div className="win-in">
-                <div style={{fontSize:60,marginBottom:12}}>\uD83C\uDFC6</div>
+                <div style={{fontSize:60,marginBottom:12}}>🏆</div>
                 {sorteoState.ganadores.map((w,i)=>(
                   <div key={w.id} style={{marginBottom:16}}>
                     {sorteoState.ganadores.length>1&&<div style={{color:C.muted,fontSize:13,marginBottom:4}}>Ganador #{i+1}</div>}
                     <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:sorteoState.ganadores.length===1?48:34,fontWeight:800,color:C.green,letterSpacing:2,textTransform:"uppercase",lineHeight:1,marginBottom:6}}>{w.nombre}</div>
-                    <div style={{color:C.muted,fontSize:14}}>\uD83D\uDCF1 {w.telefono} \u00b7 DNI: {w.dni}</div>
-                    {parseInt(w.totalWins)>1&&<div style={{color:C.warn,fontSize:12,fontWeight:600,marginTop:4}}>\u26a0\ufe0f Gan\u00f3 {parseInt(w.totalWins)-1} veces anteriormente</div>}
+                    <div style={{color:C.muted,fontSize:14}}>📱 {w.telefono} · DNI: {w.dni}</div>
+                    {parseInt(w.totalWins)>1&&<div style={{color:C.warn,fontSize:12,fontWeight:600,marginTop:4}}>⚠️ Ganó {parseInt(w.totalWins)-1} veces anteriormente</div>}
                   </div>
                 ))}
                 <button className="btn-ghost" style={{marginTop:16}} onClick={()=>nav(V.CONS)}>Ver todos los concursos</button>
@@ -1170,14 +1170,14 @@ function MainApp({onLogout,currentUser}){
         {/* ── EDITAR CONCURSO ── */}
         {view===V.CON_EDIT&&selCon&&(
           <div className="fade-in" style={{maxWidth:520}}>
-            <Back to={V.CON_DET} label="\u2190 Volver al concurso"/>
+            <Back to={V.CON_DET} label="← Volver al concurso"/>
             <Title t="Editar Concurso" sub={selCon.nombre}/>
             <FErr/>
             <Lbl>Nombre del concurso *</Lbl>
             <input className="inp" value={editConForm.nombre} onChange={e=>{setEditConForm(p=>({...p,nombre:e.target.value}));setFormErr("");}} style={{marginBottom:14}}/>
             <Lbl>Premio *</Lbl>
             <input className="inp" value={editConForm.premio} onChange={e=>{setEditConForm(p=>({...p,premio:e.target.value}));setFormErr("");}} style={{marginBottom:14}}/>
-            <Lbl>Descripci\u00f3n</Lbl>
+            <Lbl>Descripción</Lbl>
             <input className="inp" value={editConForm.descripcion} onChange={e=>setEditConForm(p=>({...p,descripcion:e.target.value}))} style={{marginBottom:14}}/>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
               <div><Lbl>Fecha desde</Lbl><input className="inp" type="date" value={editConForm.fechaDesde} onChange={e=>setEditConForm(p=>({...p,fechaDesde:e.target.value}))}/></div>
@@ -1185,14 +1185,14 @@ function MainApp({onLogout,currentUser}){
             </div>
             <Lbl>Tipo *</Lbl>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-              {[["ganador_directo","\uD83C\uDFC6 Ganador directo","Gana al instante"],["sorteo","\uD83C\uDFB2 Sorteo","Se sortea entre inscriptos"]].map(([val,label,desc])=>(
+              {[["ganador_directo","🏆 Ganador directo","Gana al instante"],["sorteo","🎲 Sorteo","Se sortea entre inscriptos"]].map(([val,label,desc])=>(
                 <div key={val} onClick={()=>setEditConForm(p=>({...p,tipo:val}))} style={{border:`2px solid ${editConForm.tipo===val?C.accent:C.border}`,borderRadius:10,padding:"12px 14px",cursor:"pointer",background:editConForm.tipo===val?C.accent+"11":C.card,transition:"all .15s"}}>
                   <div style={{fontWeight:700,fontSize:14,color:editConForm.tipo===val?C.accent:C.text,marginBottom:4}}>{label}</div>
                   <div style={{fontSize:12,color:C.muted}}>{desc}</div>
                 </div>
               ))}
             </div>
-            {editConForm.tipo==="ganador_directo"&&<div style={{marginBottom:14}}><Lbl>Cantidad total de premios</Lbl><input className="inp" type="number" min="1" placeholder="Vac\u00edo = ilimitado" value={editConForm.stockTotal} onChange={e=>setEditConForm(p=>({...p,stockTotal:e.target.value}))}/></div>}
+            {editConForm.tipo==="ganador_directo"&&<div style={{marginBottom:14}}><Lbl>Cantidad total de premios</Lbl><input className="inp" type="number" min="1" placeholder="Vacío = ilimitado" value={editConForm.stockTotal} onChange={e=>setEditConForm(p=>({...p,stockTotal:e.target.value}))}/></div>}
             <button className="btn" onClick={updateConcurso} disabled={saving} style={{width:"100%",padding:13}}>{saving?"Guardando...":"Guardar cambios"}</button>
           </div>
         )}
@@ -1207,7 +1207,7 @@ function MainApp({onLogout,currentUser}){
             <input className="inp" placeholder="Ej: Entradas Shakira" value={conForm.nombre} onChange={e=>{setConForm(p=>({...p,nombre:e.target.value}));setFormErr("");}} style={{marginBottom:14}}/>
             <Lbl>Premio *</Lbl>
             <input className="inp" placeholder="Ej: 2 entradas campo" value={conForm.premio} onChange={e=>{setConForm(p=>({...p,premio:e.target.value}));setFormErr("");}} style={{marginBottom:14}}/>
-            <Lbl>Descripci\u00f3n</Lbl>
+            <Lbl>Descripción</Lbl>
             <input className="inp" placeholder="Detalles adicionales..." value={conForm.descripcion} onChange={e=>setConForm(p=>({...p,descripcion:e.target.value}))} style={{marginBottom:14}}/>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
               <div><Lbl>Fecha desde</Lbl><input className="inp" type="date" value={conForm.fechaDesde} onChange={e=>setConForm(p=>({...p,fechaDesde:e.target.value}))}/></div>
@@ -1215,14 +1215,14 @@ function MainApp({onLogout,currentUser}){
             </div>
             <Lbl>Tipo de concurso *</Lbl>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-              {[["ganador_directo","\uD83C\uDFC6 Ganador directo","El oyente gana en el momento, sin sorteo"],["sorteo","\uD83C\uDFB2 Sorteo","Se sortea entre varios participantes inscriptos"]].map(([val,label,desc])=>(
+              {[["ganador_directo","🏆 Ganador directo","El oyente gana en el momento, sin sorteo"],["sorteo","🎲 Sorteo","Se sortea entre varios participantes inscriptos"]].map(([val,label,desc])=>(
                 <div key={val} onClick={()=>setConForm(p=>({...p,tipo:val}))} style={{border:`2px solid ${conForm.tipo===val?C.accent:C.border}`,borderRadius:10,padding:"14px 16px",cursor:"pointer",background:conForm.tipo===val?C.accent+"11":C.card,transition:"all .15s"}}>
                   <div style={{fontWeight:700,fontSize:14,color:conForm.tipo===val?C.accent:C.text,marginBottom:4}}>{label}</div>
                   <div style={{fontSize:12,color:C.muted}}>{desc}</div>
                 </div>
               ))}
             </div>
-            {conForm.tipo==="ganador_directo"&&<div style={{marginBottom:14}}><Lbl>Cantidad de premios disponibles (opcional)</Lbl><input className="inp" type="number" min="1" placeholder="Ej: 40 \u2014 vac\u00edo = ilimitado" value={conForm.stockTotal} onChange={e=>setConForm(p=>({...p,stockTotal:e.target.value}))}/><p style={{color:C.muted,fontSize:11,marginTop:5}}>El sistema te avisar\u00e1 cuando se agoten los premios.</p></div>}
+            {conForm.tipo==="ganador_directo"&&<div style={{marginBottom:14}}><Lbl>Cantidad de premios disponibles (opcional)</Lbl><input className="inp" type="number" min="1" placeholder="Ej: 40 — vacío = ilimitado" value={conForm.stockTotal} onChange={e=>setConForm(p=>({...p,stockTotal:e.target.value}))}/><p style={{color:C.muted,fontSize:11,marginTop:5}}>El sistema te avisará cuando se agoten los premios.</p></div>}
             <button className="btn" onClick={addConcurso} disabled={saving} style={{width:"100%",padding:13,marginTop:4}}>{saving?"Guardando...":"Crear concurso"}</button>
           </div>
         )}
@@ -1230,37 +1230,37 @@ function MainApp({onLogout,currentUser}){
         {/* ── BÚSQUEDA WHATSAPP ── */}
         {view===V.BUSCAR&&(
           <div className="fade-in">
-            <Title t="B\u00fasqueda por WhatsApp" sub="Ingres\u00e1 el n\u00famero para ver el historial al instante"/>
+            <Title t="Búsqueda por WhatsApp" sub="Ingresá el número para ver el historial al instante"/>
             <div style={{display:"flex",gap:10,marginBottom:24}}>
-              <input className="inp" type="tel" placeholder="\uD83D\uDCF1  N\u00famero de WhatsApp..." value={busqueda} onChange={e=>setBusqueda(e.target.value)} style={{fontSize:16}}/>
-              {busqueda&&<button className="btn-ghost" onClick={()=>setBusqueda("")} style={{flexShrink:0}}>\u2715</button>}
+              <input className="inp" type="tel" placeholder="📱  Número de WhatsApp..." value={busqueda} onChange={e=>setBusqueda(e.target.value)} style={{fontSize:16}}/>
+              {busqueda&&<button className="btn-ghost" onClick={()=>setBusqueda("")} style={{flexShrink:0}}>✕</button>}
             </div>
             {busqueda.length>=4&&(()=>{
               const found=oyentes.find(o=>o.telefono.replace(/\D/g,"").includes(busqueda.replace(/\D/g,"")));
-              if(!found)return(<div className="card" style={{padding:28,textAlign:"center"}}><div style={{fontSize:32,marginBottom:10}}>\uD83D\uDD0D</div><p style={{color:C.muted,fontSize:14}}>No encontrado. <button className="btn" onClick={()=>nav(V.OY_QUICK)} style={{padding:"8px 16px",marginLeft:8,fontSize:13}}>\u26a1 Registro r\u00e1pido</button><button className="btn-ghost" onClick={()=>nav(V.OY_NEW)} style={{padding:"8px 16px",marginLeft:8,fontSize:13}}>+ Completo</button></p></div>);
+              if(!found)return(<div className="card" style={{padding:28,textAlign:"center"}}><div style={{fontSize:32,marginBottom:10}}>🔍</div><p style={{color:C.muted,fontSize:14}}>No encontrado. <button className="btn" onClick={()=>nav(V.OY_QUICK)} style={{padding:"8px 16px",marginLeft:8,fontSize:13}}>⚡ Registro rápido</button><button className="btn-ghost" onClick={()=>nav(V.OY_NEW)} style={{padding:"8px 16px",marginLeft:8,fontSize:13}}>+ Completo</button></p></div>);
               return(<div className="card fade-in" style={{padding:20}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10,marginBottom:16}}>
                   <div>
                     <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:26,fontWeight:800,textTransform:"uppercase",letterSpacing:1}}>{found.nombre}</div>
-                    <div style={{color:C.muted,fontSize:13,margin:"4px 0"}}>\uD83D\uDCF1 {found.telefono} \u00b7 DNI {found.dni}{found.edad?" \u00b7 "+found.edad+" a\u00f1os":""}</div>
-                    {found.localidad&&<div style={{color:C.muted,fontSize:13}}>\uD83D\uDCCD {found.localidad}</div>}
-                    {found.email&&<div style={{color:C.muted,fontSize:13}}>\u2709\ufe0f {found.email}</div>}
-                    {found.nota&&<div style={{color:C.warn,fontSize:12,marginTop:4,fontWeight:600}}>\uD83D\uDCDD {found.nota}</div>}
+                    <div style={{color:C.muted,fontSize:13,margin:"4px 0"}}>📱 {found.telefono} · DNI {found.dni}{found.edad?" · "+found.edad+" años":""}</div>
+                    {found.localidad&&<div style={{color:C.muted,fontSize:13}}>📍 {found.localidad}</div>}
+                    {found.email&&<div style={{color:C.muted,fontSize:13}}>✉️ {found.email}</div>}
+                    {found.nota&&<div style={{color:C.warn,fontSize:12,marginTop:4,fontWeight:600}}>📝 {found.nota}</div>}
                   </div>
-                  <button className="btn" onClick={()=>nav(V.OY_DET,found.id)} style={{padding:"9px 18px",fontSize:13}}>Ver perfil \u2192</button>
+                  <button className="btn" onClick={()=>nav(V.OY_DET,found.id)} style={{padding:"9px 18px",fontSize:13}}>Ver perfil →</button>
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:14}}>
-                  {[["Participaciones",found.veces||0,C.accent],["Premios ganados",found.totalWins||0,C.green],["\u00daltimo premio",found.ultimoWin||"Nunca",C.warn]].map(([l,v,col])=>(
+                  {[["Participaciones",found.veces||0,C.accent],["Premios ganados",found.totalWins||0,C.green],["Último premio",found.ultimoWin||"Nunca",C.warn]].map(([l,v,col])=>(
                     <div key={l} style={{background:C.bg,borderRadius:8,padding:"12px",textAlign:"center"}}>
                       <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:26,fontWeight:800,color:col}}>{v}</div>
                       <div style={{color:C.muted,fontSize:11,marginTop:2,fontWeight:600,textTransform:"uppercase",letterSpacing:.5}}>{l}</div>
                     </div>
                   ))}
                 </div>
-                {isRecent(found)&&<div style={{background:C.warn+"11",border:`1px solid ${C.warn}44`,borderRadius:8,padding:"12px 16px",display:"flex",gap:8,alignItems:"center"}}><span style={{fontSize:18}}>\u26a0\ufe0f</span><span style={{color:C.warn,fontWeight:700,fontSize:14}}>Gan\u00f3 hace {daysSince(found.ultimoWin)} d\u00edas.</span></div>}
+                {isRecent(found)&&<div style={{background:C.warn+"11",border:`1px solid ${C.warn}44`,borderRadius:8,padding:"12px 16px",display:"flex",gap:8,alignItems:"center"}}><span style={{fontSize:18}}>⚠️</span><span style={{color:C.warn,fontWeight:700,fontSize:14}}>Ganó hace {daysSince(found.ultimoWin)} días.</span></div>}
               </div>);
             })()}
-            {busqueda.length<4&&<div className="card" style={{padding:40,textAlign:"center"}}><div style={{fontSize:48,marginBottom:12}}>\uD83D\uDCF1</div><p style={{color:C.muted,fontSize:14,fontWeight:600}}>Escrib\u00ed al menos 4 d\u00edgitos del n\u00famero</p></div>}
+            {busqueda.length<4&&<div className="card" style={{padding:40,textAlign:"center"}}><div style={{fontSize:48,marginBottom:12}}>📱</div><p style={{color:C.muted,fontSize:14,fontWeight:600}}>Escribí al menos 4 dígitos del número</p></div>}
           </div>
         )}
 
@@ -1270,7 +1270,7 @@ function MainApp({onLogout,currentUser}){
 }
 
 /* ─── CONFIG ── */
-const GAS_URL="https://script.google.com/macros/s/AKfycbxOgmPUo7wA2bfrk47p8bWn4N0NzxfLvja2vkR5L-aE_3mJ9qeqB5vAviBQzDpA54tp/exec";
+const GAS_URL="https://script.google.com/macros/s/AKfycbwOu4sAbmNK7Arqgu9enU8zc8vn8t7bYZhvmT8lDIF2ZXg0A6IvjreVzfV9efU4FXiw/exec";
 const ADMIN_PASSWORD="mph951";
 
 export default function App(){
