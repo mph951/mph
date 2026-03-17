@@ -15,7 +15,7 @@ const DARK = {
 };
 
 const V = {
-  DASH:"dash", OYENTES:"oy", OY_DET:"oy_det", OY_NEW:"oy_new",
+  DASH:"dash", OYENTES:"oy", OY_DET:"oy_det", OY_NEW:"oy_new", OY_EDIT:"oy_edit",
   CONS:"con", CON_DET:"con_det", CON_NEW:"con_new",
   SORTEO:"sorteo", BUSCAR:"buscar",
 };
@@ -146,6 +146,7 @@ function MainApp({ onLogout }) {
   const [oyConIds, setOyConIds] = useState([]); // concursos seleccionados al registrar
   const emptyCon = {nombre:"",premio:"",descripcion:"",fechaDesde:"",fechaHasta:"",tipo:"ganador_directo"};
   const [oyForm,  setOyForm]  = useState(emptyOy);
+  const [editForm, setEditForm] = useState(emptyOy);
   const [conForm, setConForm] = useState(emptyCon);
 
   const showToast = (msg,type="ok") => { setToast({msg,type}); setTimeout(()=>setToast(null),3500); };
@@ -236,6 +237,21 @@ function MainApp({ onLogout }) {
       const finalOy={...newO,veces:inscriptos,totalWins:ganados,ultimoWin:ganados>0?today():""};
       setOyentes(p=>[...p,finalOy]); setOyForm(emptyOy); setOyConIds([]);
       showToast(inscriptos>0?`Oyente registrado e inscripto en ${inscriptos} concurso${inscriptos>1?"s":""}  ✓`:"Oyente registrado ✓"); nav(V.OYENTES);
+    } catch(e){setFormErr("Error: "+e.message);}
+    finally{setSaving(false);}
+  };
+
+  const updateOyente = async()=>{
+    if(!editForm.nombre||!editForm.telefono||!editForm.dni){setFormErr("Nombre, teléfono y DNI son obligatorios.");return;}
+    const dup=oyentes.find(o=>o.telefono===editForm.telefono&&o.id!==selId);
+    if(dup){setFormErr("Ya existe otro oyente con ese teléfono.");return;}
+    setSaving(true);
+    try {
+      const updated={...selOy,...editForm,edad:parseInt(editForm.edad)||""};
+      await api("updateOyente",updated);
+      setOyentes(p=>p.map(o=>o.id===selId?updated:o));
+      showToast("Datos actualizados ✓");
+      nav(V.OY_DET,selId);
     } catch(e){setFormErr("Error: "+e.message);}
     finally{setSaving(false);}
   };
@@ -595,14 +611,17 @@ function MainApp({ onLogout }) {
         {view===V.OY_DET&&selOy&&(
           <div className="fade-in">
             <Back to={V.OYENTES}/>
-            <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:20}}>
-              <div style={{width:56,height:56,borderRadius:"50%",background:C.accent+"22",border:`2px solid ${C.accent}`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Barlow Condensed',sans-serif",fontSize:28,fontWeight:800,flexShrink:0,color:C.accent}}>
-                {selOy.nombre.charAt(0).toUpperCase()}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,marginBottom:20,flexWrap:"wrap"}}>
+              <div style={{display:"flex",alignItems:"center",gap:16}}>
+                <div style={{width:56,height:56,borderRadius:"50%",background:C.accent+"22",border:`2px solid ${C.accent}`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Barlow Condensed',sans-serif",fontSize:28,fontWeight:800,flexShrink:0,color:C.accent}}>
+                  {selOy.nombre.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h2 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:28,fontWeight:800,textTransform:"uppercase",letterSpacing:1}}>{selOy.nombre}</h2>
+                  <p style={{color:C.muted,fontSize:13}}>Registrado el {selOy.fechaRegistro}</p>
+                </div>
               </div>
-              <div>
-                <h2 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:28,fontWeight:800,textTransform:"uppercase",letterSpacing:1}}>{selOy.nombre}</h2>
-                <p style={{color:C.muted,fontSize:13}}>Registrado el {selOy.fechaRegistro}</p>
-              </div>
+              <button className="btn-ghost" onClick={()=>{ setEditForm({nombre:selOy.nombre||"",telefono:selOy.telefono||"",dni:selOy.dni||"",email:selOy.email||"",edad:selOy.edad||"",localidad:selOy.localidad||"",genero:selOy.genero||""}); setFormErr(""); nav(V.OY_EDIT,selOy.id); }} style={{display:"flex",alignItems:"center",gap:6}}>✏️ Editar datos</button>
             </div>
             {isRecent(selOy)&&<div style={{background:C.warn+"11",border:`1px solid ${C.warn}44`,borderRadius:8,padding:"10px 16px",marginBottom:16,display:"flex",gap:8,alignItems:"center"}}><span>⚠️</span><span style={{color:C.warn,fontWeight:600,fontSize:13}}>Ganó un premio hace {daysSince(selOy.ultimoWin)} días.</span></div>}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
@@ -639,6 +658,29 @@ function MainApp({ onLogout }) {
                 </div>);
               })}
             </div>
+
+            {/* Agregar a concurso activo desde el perfil */}
+            {consActivos.filter(c=>!inCon(selOy.id,c.id)).length>0&&(
+              <div className="card" style={{padding:18,marginTop:14}}>
+                <h3 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:15,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:14}}>Agregar a concurso activo</h3>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {consActivos.filter(c=>!inCon(selOy.id,c.id)).map(c=>(
+                    <div key={c.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",borderRadius:8,border:`1px solid ${C.border}`,background:C.bg,gap:10,flexWrap:"wrap"}}>
+                      <div>
+                        <div style={{fontWeight:600,fontSize:13}}>{c.nombre}</div>
+                        <div style={{fontSize:11,color:C.muted}}>🎁 {c.premio} · {c.tipo==="sorteo"?"🎲 Sorteo":"🏆 Ganador directo"}</div>
+                      </div>
+                      <button
+                        className={c.tipo==="ganador_directo"?"btn-green":"btn-ghost"}
+                        style={{padding:"6px 14px",fontSize:12,flexShrink:0}}
+                        onClick={()=>inscribir(selOy.id,c.id)}>
+                        {c.tipo==="ganador_directo"?"🏆 Marcar ganador":"+ Inscribir"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -688,6 +730,31 @@ function MainApp({ onLogout }) {
               </div>
             )}
             <button className="btn" onClick={addOyente} disabled={saving} style={{width:"100%",padding:13,marginTop:20}}>{saving?"Guardando...":"Registrar oyente"}</button>
+          </div>
+        )}
+
+        {/* ── EDITAR OYENTE ── */}
+        {view===V.OY_EDIT&&selOy&&(
+          <div className="fade-in" style={{maxWidth:520}}>
+            <Back to={V.OY_DET} label="← Volver al perfil"/>
+            <Title t="Editar Oyente" sub={selOy.nombre}/>
+            <FErr/>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+              {[["nombre","Nombre completo *","text"],["telefono","Teléfono / WhatsApp *","tel"],["dni","DNI *","text"],["email","Email","email"],["edad","Edad","number"],["localidad","Localidad","text"]].map(([k,l,t])=>(
+                <div key={k} style={{gridColumn:k==="nombre"?"1 / span 2":"auto"}}>
+                  <Lbl>{l}</Lbl>
+                  <input className="inp" type={t} value={editForm[k]} onChange={e=>{setEditForm(p=>({...p,[k]:e.target.value}));setFormErr("");}}/>
+                </div>
+              ))}
+              <div>
+                <Lbl>Género</Lbl>
+                <select className="sel" value={editForm.genero} onChange={e=>{setEditForm(p=>({...p,genero:e.target.value}));setFormErr("");}}>
+                  <option value="">Seleccionar...</option>
+                  <option>Mujer</option><option>Hombre</option><option>Otro</option>
+                </select>
+              </div>
+            </div>
+            <button className="btn" onClick={updateOyente} disabled={saving} style={{width:"100%",padding:13,marginTop:20}}>{saving?"Guardando...":"Guardar cambios"}</button>
           </div>
         )}
 
@@ -929,7 +996,7 @@ function MainApp({ onLogout }) {
 }
 
 /* ─── CONFIG ── */
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxawvg2BVum6t5YFPzVtIBqVo7bN29ty2tPNOZDaUvIvJpFyrIUdc8X7l8tpiJsly7a/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbx4CafPbrXpyQO60Ub2hCvWyG6ZVT0U8JDIvzRMLeXPgCg_W9wxCGW53EVlpXwdZIJ9/exec";
 const ACCESS_PASSWORD = "mph951";
 
 export default function App() {
