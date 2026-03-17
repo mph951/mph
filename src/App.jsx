@@ -370,6 +370,14 @@ function MainApp({ onLogout }) {
     } catch(e){showToast("Error: "+e.message,"err");}
   };
 
+  const reactivarConcurso = async(conId)=>{
+    try {
+      await api("reactivarConcurso",{concursoId:conId});
+      setConcursos(p=>p.map(c=>c.id===conId?{...c,estado:"activo"}:c));
+      showToast("Concurso reactivado ✓");
+    } catch(e){showToast("Error: "+e.message,"err");}
+  };
+
   const eliminarConcurso = async(conId)=>{
     try {
       await api("eliminarConcurso",{concursoId:conId});
@@ -921,6 +929,9 @@ function MainApp({ onLogout }) {
                   <button className="btn-ghost" style={{fontSize:12}} onClick={()=>{ setExtendiendo(e=>!e); setNuevaFecha(selCon.fechaHasta||""); }}>📅 Extender</button>
                 )}
                 <button className="btn-ghost" style={{fontSize:12}} onClick={()=>{ setEditConForm({nombre:selCon.nombre||"",premio:selCon.premio||"",descripcion:selCon.descripcion||"",fechaDesde:selCon.fechaDesde||"",fechaHasta:selCon.fechaHasta||"",tipo:selCon.tipo||"ganador_directo"}); setFormErr(""); nav(V.CON_EDIT,selCon.id); }}>✏️ Editar</button>
+                {selCon.estado==="finalizado"&&(
+                  <button className="btn-ghost" style={{fontSize:12,color:C.green,borderColor:C.green}} onClick={()=>reactivarConcurso(selCon.id)}>▶ Reactivar</button>
+                )}
                 {selCon.estado!=="archivado"&&(
                   <button className="btn-ghost" style={{fontSize:12}} onClick={e=>{e.stopPropagation();setConfirm({type:"archivar",id:selCon.id});}}>📦 Archivar</button>
                 )}
@@ -1206,7 +1217,7 @@ function MainApp({ onLogout }) {
 }
 
 /* ─── CONFIG ── */
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzAU6XrzHcVGUz9GBWgWiRJQVYs8QQCPXcg8hwFGyFresc-rtr0UewhRZPCDlzHJ9Hd/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbx4CafPbrXpyQO60Ub2hCvWyG6ZVT0U8JDIvzRMLeXPgCg_W9wxCGW53EVlpXwdZIJ9/exec";
 const ACCESS_PASSWORD = "mph951";
 
 export default function App() {
