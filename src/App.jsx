@@ -1270,7 +1270,7 @@ function MainApp({onLogout,currentUser}){
 }
 
 /* ─── CONFIG ── */
-const GAS_URL="https://script.google.com/macros/s/AKfycbx4CafPbrXpyQO60Ub2hCvWyG6ZVT0U8JDIvzRMLeXPgCg_W9wxCGW53EVlpXwdZIJ9/exec";
+const GAS_URL="https://script.google.com/macros/s/AKfycbxOgmPUo7wA2bfrk47p8bWn4N0NzxfLvja2vkR5L-aE_3mJ9qeqB5vAviBQzDpA54tp/exec";
 const ADMIN_PASSWORD="mph951";
 
 export default function App(){
