@@ -16,8 +16,8 @@ const DARK = {
 
 const V = {
   DASH:"dash", OYENTES:"oy", OY_DET:"oy_det", OY_NEW:"oy_new", OY_EDIT:"oy_edit",
-  CONS:"con", CON_DET:"con_det", CON_NEW:"con_new",
-  SORTEO:"sorteo", BUSCAR:"buscar",
+  CONS:"con", CON_DET:"con_det", CON_NEW:"con_new", CON_EDIT:"con_edit",
+  SORTEO:"sorteo", BUSCAR:"buscar", STATS:"stats",
 };
 
 const daysSince = d => d ? Math.floor((Date.now()-new Date(d).getTime())/86400000) : null;
@@ -149,6 +149,7 @@ function MainApp({ onLogout }) {
   const [editForm, setEditForm] = useState(emptyOy);
   const [editConId, setEditConId] = useState(""); // concurso a agregar al editar
   const [conForm, setConForm] = useState(emptyCon);
+  const [editConForm, setEditConForm] = useState(emptyCon);
 
   const showToast = (msg,type="ok") => { setToast({msg,type}); setTimeout(()=>setToast(null),3500); };
 
@@ -275,6 +276,19 @@ function MainApp({ onLogout }) {
       }
       setEditConId("");
       nav(V.OY_DET,selId);
+    } catch(e){setFormErr("Error: "+e.message);}
+    finally{setSaving(false);}
+  };
+
+  const updateConcurso = async()=>{
+    if(!editConForm.nombre||!editConForm.premio){setFormErr("Nombre y premio son obligatorios.");return;}
+    setSaving(true);
+    try {
+      const updated={...selCon,...editConForm};
+      await api("updateConcurso",updated);
+      setConcursos(p=>p.map(c=>c.id===selId?updated:c));
+      showToast("Concurso actualizado ✓");
+      nav(V.CON_DET,selId);
     } catch(e){setFormErr("Error: "+e.message);}
     finally{setSaving(false);}
   };
@@ -550,17 +564,47 @@ function MainApp({ onLogout }) {
         {/* ── DASHBOARD ── */}
         {view===V.DASH&&(
           <div className="fade-in">
-            <Title t="Panel Principal" sub={new Date().toLocaleDateString("es-AR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}/>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10,marginBottom:20}}>
-              {[[stats.total,"👥","Oyentes",C.accent],[stats.consActivos,"🎯","Activos",C.warn],[stats.ganadores,"🏆","Ganadores",C.green],[stats.promEdad?stats.promEdad+"a":"—","📊","Edad prom.","#A855F7"]].map(([v,ic,l,col],i)=>(
-                <div key={i} className="card" style={{padding:"16px 14px"}}>
-                  <div style={{fontSize:22,marginBottom:6}}>{ic}</div>
-                  <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:34,fontWeight:800,color:col,lineHeight:1}}>{v}</div>
-                  <div style={{fontSize:11,color:C.muted,marginTop:4,fontWeight:600,textTransform:"uppercase",letterSpacing:.5}}>{l}</div>
+            <p style={{color:C.muted,fontSize:12,marginBottom:16}}>{new Date().toLocaleDateString("es-AR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
+
+            {/* 4 grandes tarjetas de navegación */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,marginBottom:20}}>
+              {[
+                {title:"OYENTES",sub:"Buscar por nombre, Cel o DNI",icon:"👥",color:C.accent,action:()=>nav(V.OYENTES)},
+                {title:"CONCURSOS ACTIVOS",sub:consActivos.length+" concurso"+(consActivos.length!==1?"s":"")+" en curso",icon:"🎯",color:C.warn,action:()=>nav(V.CONS)},
+                {title:"WHATSAPP",sub:"Buscar oyente por su WhatsApp",icon:"📱",color:C.green,action:()=>nav(V.BUSCAR)},
+                {title:"VER ESTADÍSTICAS",sub:"Edades, géneros y más",icon:"📊",color:"#A855F7",action:()=>nav(V.STATS)},
+              ].map(({title,sub,icon,color,action})=>(
+                <div key={title} className="card row" onClick={action} style={{padding:"22px 18px",cursor:"pointer",borderLeft:`4px solid ${color}`,transition:"transform .15s"}}
+                  onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
+                  onMouseLeave={e=>e.currentTarget.style.transform="translateY(0)"}>
+                  <div style={{fontSize:28,marginBottom:8}}>{icon}</div>
+                  <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:22,fontWeight:800,letterSpacing:1,color:C.text,lineHeight:1,marginBottom:5}}>{title}</div>
+                  <div style={{fontSize:12,color:C.muted}}>{sub}</div>
                 </div>
               ))}
             </div>
-            {stats.recentW>0&&<div style={{background:C.warn+"11",border:`1px solid ${C.warn}44`,borderRadius:10,padding:"12px 16px",marginBottom:20,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>⚠️</span><span style={{color:C.warn,fontSize:13,fontWeight:600}}>{stats.recentW} oyente{stats.recentW>1?"s":""} ganaron un premio en los últimos 30 días.</span></div>}
+
+            {/* Alerta recientes */}
+            {stats.recentW>0&&<div style={{background:C.warn+"11",border:`1px solid ${C.warn}44`,borderRadius:10,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:18}}>⚠️</span><span style={{color:C.warn,fontSize:13,fontWeight:600}}>{stats.recentW} oyente{stats.recentW>1?"s":""} ganaron un premio en los últimos 30 días.</span></div>}
+
+            {/* Mini stats */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+              {[[stats.total,"👥","Oyentes",C.accent],[stats.consActivos,"🎯","Activos",C.warn],[stats.ganadores,"🏆","Ganadores",C.green],[stats.promEdad?stats.promEdad+"a":"—","📊","Edad prom.","#A855F7"]].map(([v,ic,l,col],i)=>(
+                <div key={i} className="card" style={{padding:"10px 12px",textAlign:"center"}}>
+                  <div style={{fontSize:14,marginBottom:2}}>{ic}</div>
+                  <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:22,fontWeight:800,color:col,lineHeight:1}}>{v}</div>
+                  <div style={{fontSize:10,color:C.muted,marginTop:2,fontWeight:600,textTransform:"uppercase",letterSpacing:.5}}>{l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── ESTADÍSTICAS ── */}
+        {view===V.STATS&&(
+          <div className="fade-in">
+            <Back to={V.DASH}/>
+            <Title t="Estadísticas" sub="Resumen de la base de oyentes"/>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:14}}>
               <div className="card" style={{padding:18}}>
                 <h3 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:15,fontWeight:700,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginBottom:14}}>Rango de edades</h3>
@@ -580,7 +624,6 @@ function MainApp({ onLogout }) {
                     <div style={{color:C.muted,fontSize:11,marginTop:1}}>{conPartic(c.id).length} participantes · {c.tipo==="sorteo"?"🎲 Sorteo":"🏆 Ganador directo"}</div>
                   </div>
                 ))}
-                <button className="btn" onClick={()=>nav(V.CON_NEW)} style={{width:"100%",marginTop:14,padding:10}}>+ Nuevo concurso</button>
               </div>
             </div>
           </div>
@@ -863,6 +906,7 @@ function MainApp({ onLogout }) {
                 {selCon.estado==="activo"&&(
                   <button className="btn-ghost" style={{fontSize:12}} onClick={()=>{ setExtendiendo(e=>!e); setNuevaFecha(selCon.fechaHasta||""); }}>📅 Extender</button>
                 )}
+                <button className="btn-ghost" style={{fontSize:12}} onClick={()=>{ setEditConForm({nombre:selCon.nombre||"",premio:selCon.premio||"",descripcion:selCon.descripcion||"",fechaDesde:selCon.fechaDesde||"",fechaHasta:selCon.fechaHasta||"",tipo:selCon.tipo||"ganador_directo"}); setFormErr(""); nav(V.CON_EDIT,selCon.id); }}>✏️ Editar</button>
                 {selCon.estado!=="archivado"&&(
                   <button className="btn-ghost" style={{fontSize:12}} onClick={e=>{e.stopPropagation();setConfirm({type:"archivar",id:selCon.id});}}>📦 Archivar</button>
                 )}
@@ -967,6 +1011,36 @@ function MainApp({ onLogout }) {
           </div>
         )}
 
+        {/* ── EDITAR CONCURSO ── */}
+        {view===V.CON_EDIT&&selCon&&(
+          <div className="fade-in" style={{maxWidth:520}}>
+            <Back to={V.CON_DET} label="← Volver al concurso"/>
+            <Title t="Editar Concurso" sub={selCon.nombre}/>
+            <FErr/>
+            <Lbl>Nombre del concurso *</Lbl>
+            <input className="inp" placeholder="Ej: Entradas Shakira" value={editConForm.nombre} onChange={e=>{setEditConForm(p=>({...p,nombre:e.target.value}));setFormErr("");}} style={{marginBottom:14}}/>
+            <Lbl>Premio *</Lbl>
+            <input className="inp" placeholder="Ej: 2 entradas campo" value={editConForm.premio} onChange={e=>{setEditConForm(p=>({...p,premio:e.target.value}));setFormErr("");}} style={{marginBottom:14}}/>
+            <Lbl>Descripción</Lbl>
+            <input className="inp" placeholder="Detalles adicionales..." value={editConForm.descripcion} onChange={e=>setEditConForm(p=>({...p,descripcion:e.target.value}))} style={{marginBottom:14}}/>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+              <div><Lbl>Fecha desde</Lbl><input className="inp" type="date" value={editConForm.fechaDesde} onChange={e=>setEditConForm(p=>({...p,fechaDesde:e.target.value}))}/></div>
+              <div><Lbl>Fecha hasta</Lbl><input className="inp" type="date" value={editConForm.fechaHasta} onChange={e=>setEditConForm(p=>({...p,fechaHasta:e.target.value}))}/></div>
+            </div>
+            <Lbl>Tipo de concurso *</Lbl>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
+              {[["ganador_directo","🏆 Ganador directo","El oyente gana en el momento"],["sorteo","🎲 Sorteo","Se sortea entre los inscriptos"]].map(([val,label,desc])=>(
+                <div key={val} onClick={()=>setEditConForm(p=>({...p,tipo:val}))}
+                  style={{border:`2px solid ${editConForm.tipo===val?C.accent:C.border}`,borderRadius:10,padding:"14px 16px",cursor:"pointer",background:editConForm.tipo===val?C.accent+"11":C.card,transition:"all .15s"}}>
+                  <div style={{fontWeight:700,fontSize:14,color:editConForm.tipo===val?C.accent:C.text,marginBottom:4}}>{label}</div>
+                  <div style={{fontSize:12,color:C.muted}}>{desc}</div>
+                </div>
+              ))}
+            </div>
+            <button className="btn" onClick={updateConcurso} disabled={saving} style={{width:"100%",padding:13}}>{saving?"Guardando...":"Guardar cambios"}</button>
+          </div>
+        )}
+
         {/* ── NUEVO CONCURSO ── */}
         {view===V.CON_NEW&&(
           <div className="fade-in" style={{maxWidth:520}}>
@@ -1041,7 +1115,7 @@ function MainApp({ onLogout }) {
 }
 
 /* ─── CONFIG ── */
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzsrzLvjaDb42TmdAeSXOZF8wOW1wLk7pCKU7wA4jemG0F85_imA1KXjqK2zGhl4Kre/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbx4CafPbrXpyQO60Ub2hCvWyG6ZVT0U8JDIvzRMLeXPgCg_W9wxCGW53EVlpXwdZIJ9/exec";
 const ACCESS_PASSWORD = "mph951";
 
 export default function App() {
