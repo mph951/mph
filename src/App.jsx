@@ -160,7 +160,23 @@ function MainApp({ onLogout }) {
     try {
       const d = await api("getAll");
       setOyentes(d.oyentes||[]);
-      setConcursos(d.concursos||[]);
+      // Normalizar concursos: arregla datos viejos con columnas desalineadas
+      const rawCons = d.concursos||[];
+      const normCons = rawCons.map(c => {
+        let fixed = {...c};
+        // Si estado está vacío o no es un valor conocido, marcarlo como activo
+        if (!fixed.estado || !["activo","finalizado","archivado"].includes(fixed.estado)) {
+          fixed.estado = "activo";
+        }
+        // Si ganadorNombre contiene un valor de estado (bug de columnas viejas), limpiarlo
+        if (["activo","finalizado","archivado"].includes(fixed.ganadorNombre)) {
+          fixed.ganadorNombre = "";
+        }
+        // Si tipo está vacío, asumir ganador_directo (concursos viejos no tenían tipo)
+        if (!fixed.tipo) fixed.tipo = "ganador_directo";
+        return fixed;
+      });
+      setConcursos(normCons);
       setPartic(d.participaciones||[]);
     } catch(e){ showToast("Error al cargar: "+e.message,"err"); }
     finally{ setLoading(false); }
@@ -564,6 +580,7 @@ function MainApp({ onLogout }) {
         <button onClick={exportExcel} style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:6,padding:"4px 10px",color:C.muted,fontSize:11,fontWeight:600}} title="Exportar oyentes a Excel">⬇ Excel</button>
         <button onClick={()=>setDark(d=>!d)} style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:16,padding:"4px 12px",color:C.muted,fontSize:11,fontWeight:600}}>{dark?"☀️":"🌙"}</button>
         <button onClick={()=>{loadAll();showToast("Datos actualizados ✓");}} style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:6,padding:"4px 10px",color:C.muted,fontSize:11}}>↺</button>
+        <button onClick={async()=>{ await api("repairConcursos"); await loadAll(); showToast("Concursos reparados ✓"); }} style={{background:"transparent",border:`1px solid ${C.warn}`,borderRadius:6,padding:"4px 10px",color:C.warn,fontSize:10,fontWeight:600}} title="Reparar concursos con datos viejos">🔧</button>
         <button onClick={onLogout} style={{background:"transparent",border:`1px solid ${C.border}`,borderRadius:6,padding:"4px 10px",color:C.muted,fontSize:11}}>Salir</button>
       </div>
 
@@ -1217,7 +1234,7 @@ function MainApp({ onLogout }) {
 }
 
 /* ─── CONFIG ── */
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz1Il603Nj5QlUAGxux2KntuzvuhNEQgH5KXYuKNaTyFhhdYUWb6JAlTNT3c7xfjAAf/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbx4CafPbrXpyQO60Ub2hCvWyG6ZVT0U8JDIvzRMLeXPgCg_W9wxCGW53EVlpXwdZIJ9/exec";
 const ACCESS_PASSWORD = "mph951";
 
 export default function App() {
