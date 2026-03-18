@@ -10,8 +10,24 @@ const daysSince=d=>d?Math.floor((Date.now()-new Date(d).getTime())/86400000):nul
 const isRecent=o=>{const d=daysSince(o?.ultimoWin);return d!==null&&d<=30;};
 const uid=()=>Math.random().toString(36).slice(2,10);
 const today=()=>new Date().toISOString().split("T")[0];
-const daysUntil=d=>{if(!d)return null;return Math.ceil((new Date(d)-Date.now())/86400000);};
-const fmtDate=d=>{if(!d)return"";try{const[y,m,dd]=d.split("-");return`${dd}/${m}/${y}`;}catch{return d;}};
+const daysUntil=d=>{if(!d||d==="undefined")return null;const dt=new Date(d);if(isNaN(dt.getTime()))return null;return Math.ceil((dt-Date.now())/86400000);};
+const fmtDate=d=>{
+  if(!d||d==="undefined"||d==="null")return"";
+  // Handle ISO date YYYY-MM-DD
+  const iso=/^(\d{4})-(\d{2})-(\d{2})/.exec(d);
+  if(iso)return`${iso[3]}/${iso[2]}/${iso[1]}`;
+  // Handle full Date string from Sheets (e.g. "Fri May 15 2026 00:00:00 GMT...")
+  try{
+    const dt=new Date(d);
+    if(!isNaN(dt.getTime())){
+      const dd=String(dt.getDate()).padStart(2,"0");
+      const mm=String(dt.getMonth()+1).padStart(2,"0");
+      const yy=dt.getFullYear();
+      return`${dd}/${mm}/${yy}`;
+    }
+  }catch(e){}
+  return d;
+};
 
 const api=async(action,data=null)=>{
   const u=new URL(GAS_URL);
@@ -772,10 +788,10 @@ function MainApp({onLogout,currentUser}){
         {view===V.OYENTES&&(
           <div className="fade-in">
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16,gap:10,flexWrap:"wrap"}}>
-              <Title t="Oyentes" sub={`${oyentesFiltrados.length}${filtrosActivos?" filtrados de "+oyentes.length+" totales":" registrados"}`}/>
-              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                <button className="btn-ghost" onClick={()=>nav(V.OY_QUICK)} style={{fontSize:12,color:C.green,borderColor:C.green}}>⚡ Rápido</button>
-                <button className="btn" onClick={()=>nav(V.OY_NEW)}>+ Registrar</button>
+              <Title t="Oyentes" sub={filtrosActivos?`${oyentesFiltrados.length} filtrados de ${oyentes.length} totales`:`${oyentes.length} registrados — mostrando los últimos 10`}/>
+              <div style={{display:"flex",gap:12,justifyContent:"center",width:"100%",flexWrap:"wrap",marginBottom:4}}>
+                <button className="btn-green" onClick={()=>nav(V.OY_QUICK)} style={{padding:"13px 28px",fontSize:16,fontFamily:"'Barlow Condensed',sans-serif",fontWeight:800,letterSpacing:1,textTransform:"uppercase"}}>⚡ INGRESO RÁPIDO</button>
+                <button className="btn" onClick={()=>nav(V.OY_NEW)} style={{padding:"13px 28px",fontSize:16,fontFamily:"'Barlow Condensed',sans-serif",fontWeight:800,letterSpacing:1,textTransform:"uppercase"}}>+ REGISTRAR OYENTE</button>
               </div>
             </div>
             <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap"}}>
@@ -804,7 +820,7 @@ function MainApp({onLogout,currentUser}){
                     </tr>
                   </thead>
                   <tbody>
-                    {oyentesFiltrados.map(o=>(
+                    {oyentesFiltrados.slice(-10).reverse().map(o=>(
                       <tr key={o.id} className="row" style={{borderBottom:`1px solid ${C.border}`,cursor:"pointer"}} onClick={()=>nav(V.OY_DET,o.id)}>
                         <td style={{padding:"11px 14px"}}><div style={{fontWeight:600,fontSize:14}}>{o.nombre}</div><div style={{color:C.muted,fontSize:11,marginTop:1}}>DNI {o.dni}</div></td>
                         <td style={{padding:"11px 14px",fontSize:13,color:C.muted,whiteSpace:"nowrap"}}>{o.telefono}</td>
@@ -819,6 +835,7 @@ function MainApp({onLogout,currentUser}){
                 </table>
               </div>
               {oyentesFiltrados.length===0&&<div style={{padding:32,textAlign:"center",color:C.muted,fontSize:14}}>{filtrosActivos?"No hay oyentes con esos filtros.":"No hay oyentes registrados."}</div>}
+              {oyentesFiltrados.length>0&&!filtrosActivos&&<div style={{padding:"10px 14px",textAlign:"center",borderTop:`1px solid ${C.border}`,color:C.muted,fontSize:12}}>Mostrando los últimos 10 · <button onClick={()=>setMostrarFiltros(true)} style={{background:"none",border:"none",color:C.accent,cursor:"pointer",fontSize:12,fontWeight:600}}>Usar filtros para buscar más</button></div>}
             </div>
           </div>
         )}
@@ -1270,7 +1287,7 @@ function MainApp({onLogout,currentUser}){
 }
 
 /* ─── CONFIG ── */
-const GAS_URL="https://script.google.com/macros/s/AKfycbwOu4sAbmNK7Arqgu9enU8zc8vn8t7bYZhvmT8lDIF2ZXg0A6IvjreVzfV9efU4FXiw/exec";
+const GAS_URL="https://script.google.com/macros/s/AKfycbx4CafPbrXpyQO60Ub2hCvWyG6ZVT0U8JDIvzRMLeXPgCg_W9wxCGW53EVlpXwdZIJ9/exec";
 const ADMIN_PASSWORD="mph951";
 
 export default function App(){
